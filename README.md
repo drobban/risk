@@ -5,8 +5,8 @@
 Game states
 
     * Player announcements
-      - Connecting
-      - Ready - By consensus (when all connected say ready)
+      - Connecting - DONE
+      - Ready - By consensus (when all connected say ready) - DONE
     * Preperation
       - Color selection
       - Task assignment

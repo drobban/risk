@@ -10,17 +10,37 @@ defmodule Risk.Game do
   end
 
   def handle_event(:enter, _event, state, data) do
-    Logger.debug("#{inspect(data)}")
+    # Logger.debug("#{inspect(data, pretty: true, limit: :infinity)}")
+    Logger.debug(state)
     {:next_state, state, data}
   end
 
-  def handle_event(:cast, {:connection, pid} = _event, state, data) do
-    connections = data.connections ++ [pid]
+  def handle_event(:cast, {:connection, pid} = _event, :player_announcements = state, data) do
+    connections = data.connections |> Map.put(pid, :waiting)
     data = data |> Map.put(:connections, connections)
     {:next_state, state, data}
   end
 
-  def handle_event({:call, from}, :get_count, _state, data) do
+  def handle_event(:cast, {:ready, pid} = _event, :player_announcements = state, data) do
+    connections = data.connections |> Map.put(pid, :done)
+    data = data |> Map.put(:connections, connections)
+
+    status = Enum.reduce(connections, MapSet.new(), fn {_k, v}, acc -> acc |> MapSet.put(v) end)
+
+    case MapSet.to_list(status) do
+      [:done] ->
+        {:next_state, :preperation, data}
+      _ ->
+        {:next_state, state, data}
+    end
+  end
+
+  def handle_event(:cast, event, state, data) do
+    Logger.debug("Event: #{inspect event} not accepted in State: #{inspect state}")
+    {:next_state, state, data}
+  end
+
+  def handle_event({:call, from}, :get_status, _state, data) do
     {:keep_state_and_data, [{:reply, from, data}]}
   end
 end
