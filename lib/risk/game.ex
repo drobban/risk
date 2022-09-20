@@ -10,7 +10,7 @@ defmodule Risk.Game do
   end
 
   def handle_event(:enter, _event, state, data) do
-    Logger.debug("#{inspect data}")
+    Logger.debug("#{inspect(data)}")
     {:next_state, state, data}
   end
 

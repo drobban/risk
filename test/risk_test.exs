@@ -25,5 +25,4 @@ defmodule RiskTest do
   defp summarize_territories_continents(continents) do
     Enum.reduce(continents, [], fn continent, acc -> acc ++ continent.territories end)
   end
-
 end
