@@ -21,16 +21,16 @@ Player
       
 Game board
 
-    - Consists of countries
+    - Consists of countries - DONE
     
 Task cards
 
-    - Assignment 
+    - Assignment - DONE
 
 Risk cards
     
-    - Troop value
-    - Country
+    - Troop value - DONE
+    - Country - DONE
     
 Army
     
