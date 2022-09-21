@@ -4,7 +4,7 @@ defmodule Risk.GameContext do
   alias Risk.RiskCard, as: RiskCard
   alias Risk.Continent, as: Continent
 
-  defstruct connections: %{},
+  defstruct players: %{},
             game_board: %GameBoard{},
             mission_cards: [
               %MissionCard{

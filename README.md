@@ -26,11 +26,13 @@ Game board
 Task cards
 
     - Assignment - DONE
+    - Task functions to check if fulfilled
 
 Risk cards
     
     - Troop value - DONE
     - Country - DONE
+    - Card pile
     
 Army
     
