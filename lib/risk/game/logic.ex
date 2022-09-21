@@ -64,11 +64,10 @@ defmodule Risk.Game.Logic do
   def set_if_legal(ctx, amount, territory_name, guid) do
     territory_names =
       Enum.reduce(ctx.players[guid].risk_cards, [], fn card, acc -> acc ++ [card.territory] end)
+    territories = ctx.game_board.territories
+    idx = Enum.find_index(territories, fn territory -> territory.name == territory_name end)
 
-    if Enum.member?(territory_names, territory_name) do
-      territories = ctx.game_board.territories
-      idx = Enum.find_index(territories, fn territory -> territory.name == territory_name end)
-
+    if Enum.member?(territory_names, territory_name) and ! is_nil(idx) do
       territories =
         List.update_at(territories, idx, fn territory -> territory |> Map.put(:forces, amount) end)
 
