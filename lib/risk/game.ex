@@ -22,6 +22,7 @@ defmodule Risk.Game do
   def handle_event(:enter, _event, :deployment = state, data) do
     # Assign mission cards
     data = Logic.assign_mission_cards(data)
+    data = Logic.fillup(data)
     Logger.debug("State: #{inspect(state)}")
     {:next_state, state, data}
   end
@@ -69,6 +70,11 @@ defmodule Risk.Game do
       _ ->
         {:next_state, state, data}
     end
+  end
+
+  def handle_event(:cast, {:deploy, amount, territory, guid}, :deployment = state, data) do
+    data = Logic.set_if_legal(data, amount, territory, guid)
+    {:next_state, state, data}
   end
 
   def handle_event(:cast, event, state, data) do

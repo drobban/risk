@@ -3,7 +3,6 @@ defmodule StateTest do
   alias Risk.GameContext, as: GameContext
   use ExUnit.Case
 
-
   defp create_machine(_) do
     {:ok, pid} = GenStateMachine.start_link(Risk.Game, {:player_announcements, %GameContext{}})
 
@@ -30,7 +29,6 @@ defmodule StateTest do
       status = GenStateMachine.cast(pid, {:ready, 113})
       assert status == :ok
 
-
       status = GenStateMachine.cast(pid, {:color_select, :red, 111})
       assert status == :ok
       status = GenStateMachine.cast(pid, {:color_select, :blue, 112})
@@ -42,7 +40,31 @@ defmodule StateTest do
       assert ctx.players[111].mission_card != nil
       assert ctx.players[112].mission_card != nil
       assert ctx.players[113].mission_card != nil
+
+      assert ctx.players[111].status == :color_done
+      assert ctx.players[112].status == :color_done
+      assert ctx.players[113].status == :color_done
+
+      assert ctx.players[111].reinforcements == 35
+      assert ctx.players[112].reinforcements == 35
+      assert ctx.players[113].reinforcements == 35
+
+      card = Enum.at(ctx.players[111].risk_cards, 0)
+      enemy_card = Enum.at(ctx.players[112].risk_cards, 0)
+      status = GenStateMachine.cast(pid, {:deploy, 10, card.territory, 111})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {:deploy, 10, enemy_card.territory, 111})
+      assert status == :ok
+
+      ctx = GenStateMachine.call(pid, :get_status)
+
+      forces = Enum.find(ctx.game_board.territories, fn x -> x.name == card.territory end).forces
+      assert forces == 10
+
+      forces =
+        Enum.find(ctx.game_board.territories, fn x -> x.name == enemy_card.territory end).forces
+
+      assert forces == 0
     end
   end
-
 end

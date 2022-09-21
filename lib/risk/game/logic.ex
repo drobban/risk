@@ -1,4 +1,17 @@
 defmodule Risk.Game.Logic do
+  require Logger
+  @army_size %{3 => 35, 4 => 30, 5 => 25, 6 => 20}
+
+  def fillup(ctx) do
+    n_players = Enum.count(ctx.players)
+
+    ctx =
+      Enum.reduce(ctx.players, ctx, fn {guid, player}, acc ->
+        player = player |> Map.put(:reinforcements, @army_size[n_players])
+        acc |> put_in([Access.key(:players), guid], player)
+      end)
+  end
+
   def reset_player_status(players) do
     Enum.reduce(players, %{}, fn {k, v}, acc ->
       player = v |> put_in([Access.key(:status)], :waiting)
@@ -46,5 +59,22 @@ defmodule Risk.Game.Logic do
     player = player |> Map.put(:risk_cards, player.risk_cards ++ [card])
 
     serve_until_empty(rest ++ [player], cards)
+  end
+
+  def set_if_legal(ctx, amount, territory_name, guid) do
+    territory_names =
+      Enum.reduce(ctx.players[guid].risk_cards, [], fn card, acc -> acc ++ [card.territory] end)
+
+    if Enum.member?(territory_names, territory_name) do
+      territories = ctx.game_board.territories
+      idx = Enum.find_index(territories, fn territory -> territory.name == territory_name end)
+
+      territories =
+        List.update_at(territories, idx, fn territory -> territory |> Map.put(:forces, amount) end)
+
+      ctx |> put_in([Access.key(:game_board), Access.key(:territories)], territories)
+    else
+      ctx
+    end
   end
 end

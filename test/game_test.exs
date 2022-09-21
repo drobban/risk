@@ -15,6 +15,7 @@ defmodule GameTest do
     }
 
     ctx = Risk.Game.Logic.assign_mission_cards(ctx)
+
     for {_guid, player} <- ctx.players do
       assert player.mission_card != nil
     end
