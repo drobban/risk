@@ -15,6 +15,7 @@ defmodule Risk.Game do
     new_data = data |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
     new_data = Logic.assign_risk_cards(new_data)
 
+    Logger.debug("State: #{inspect(state)}")
     {:next_state, state, new_data}
   end
 

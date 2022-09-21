@@ -11,7 +11,7 @@ Game states
       - Troop allocation - DONE
       - Color selection - DONE
     * Deployment
-      - Task assignment - Need to filter out color based tasks
+      - Task assignment - Need to filter out color based tasks - DONE
       - Troop deployment
     * GAME
       - Reinforcements
