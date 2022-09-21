@@ -9,58 +9,70 @@ defmodule Risk.GameContext do
             mission_cards: [
               %MissionCard{
                 mission_rule: &(&1 + &2),
-                mission_description: "Conquer the continents of Asia and Africa"
+                mission_description: "Conquer the continents of Asia and Africa",
+                color_code: nil
               },
               %MissionCard{
                 mission_rule: &(&1 + &2),
                 mission_description:
-                  "Destroy all black troops, if you are the black troop then occupy 24 territories of your choice"
+                  "Destroy all black troops, if you are the black troop then occupy 24 territories of your choice",
+                color_code: :black
               },
               %MissionCard{
                 mission_rule: &(&1 + &2),
                 mission_description:
-                  "Destroy all gray troops, if you are the gray troop then occupy 24 territories of your choice"
+                  "Destroy all gray troops, if you are the gray troop then occupy 24 territories of your choice",
+                color_code: :gray
               },
               %MissionCard{
                 mission_rule: &(&1 + &2),
-                mission_description: "Conquer the continents of North America and Australia"
-              },
-              %MissionCard{
-                mission_rule: &(&1 + &2),
-                mission_description:
-                  "Destroy all blue troops, if you are the blue troop then occupy 24 territories of your choice"
-              },
-              %MissionCard{
-                mission_rule: &(&1 + &2),
-                mission_description: "Conquer the continents of North America and Africa"
-              },
-              %MissionCard{
-                mission_rule: &(&1 + &2),
-                mission_description: "Conquer the continents of Asia and South America"
+                mission_description: "Conquer the continents of North America and Australia",
+                color_code: nil
               },
               %MissionCard{
                 mission_rule: &(&1 + &2),
                 mission_description:
-                  "Destroy all green troops, if you are the green troop then occupy 24 territories of your choice"
+                  "Destroy all blue troops, if you are the blue troop then occupy 24 territories of your choice",
+                color_code: :blue
+              },
+              %MissionCard{
+                mission_rule: &(&1 + &2),
+                mission_description: "Conquer the continents of North America and Africa",
+                color_code: nil
+              },
+              %MissionCard{
+                mission_rule: &(&1 + &2),
+                mission_description: "Conquer the continents of Asia and South America",
+                color_code: nil
               },
               %MissionCard{
                 mission_rule: &(&1 + &2),
                 mission_description:
-                  "Destroy all yellow troops, if you are the yellow troop then occupy 24 territories of your choice"
+                  "Destroy all green troops, if you are the green troop then occupy 24 territories of your choice",
+                color_code: :green
               },
               %MissionCard{
                 mission_rule: &(&1 + &2),
                 mission_description:
-                  "Destroy all red troops, if you are the red troop then occupy 24 territories of your choice"
+                  "Destroy all yellow troops, if you are the yellow troop then occupy 24 territories of your choice",
+                color_code: :yellow
               },
               %MissionCard{
                 mission_rule: &(&1 + &2),
                 mission_description:
-                  "Conquer 18 territories of your choice then occupy each with at least 2 armies"
+                  "Destroy all red troops, if you are the red troop then occupy 24 territories of your choice",
+                color_code: :red
               },
               %MissionCard{
                 mission_rule: &(&1 + &2),
-                mission_description: "Conquer 24 territories of your choice"
+                mission_description:
+                  "Conquer 18 territories of your choice then occupy each with at least 2 armies",
+                color_code: nil
+              },
+              %MissionCard{
+                mission_rule: &(&1 + &2),
+                mission_description: "Conquer 24 territories of your choice",
+                color_code: nil
               }
             ],
             risk_cards: [

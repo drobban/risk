@@ -18,6 +18,12 @@ defmodule Risk.Game do
     {:next_state, state, new_data}
   end
 
+  def handle_event(:enter, _event, :deployment = state, data) do
+    # Assign mission cards
+    Logger.debug("State: #{inspect(state)}")
+    {:next_state, state, data}
+  end
+
   def handle_event(:enter, _event, state, data) do
     Logger.debug("State: #{inspect(state)}")
     {:next_state, state, data}
@@ -37,10 +43,7 @@ defmodule Risk.Game do
   def handle_event(:cast, {:ready, guid} = _event, :player_announcements = state, data) do
     data = data |> put_in([Access.key(:players), guid, Access.key(:status)], :done)
 
-    status =
-      Enum.reduce(data.players, MapSet.new(), fn {_k, v}, acc ->
-        acc |> MapSet.put(v.status)
-      end)
+    status = player_status(data.players)
 
     case MapSet.to_list(status) do
       [:done] ->
@@ -52,8 +55,18 @@ defmodule Risk.Game do
   end
 
   def handle_event(:cast, {:color_select, color, guid}, :preperation = state, data) do
-    # set color and status
-    {:next_state, state, data}
+    data = data |> put_in([Access.key(:players), guid, Access.key(:color)], color)
+    data = data |> put_in([Access.key(:players), guid, Access.key(:status)], :color_done)
+
+    status = player_status(data.players)
+
+    case MapSet.to_list(status) do
+      [:color_done] ->
+        {:next_state, :deployment, data}
+
+      _ ->
+        {:next_state, state, data}
+    end
   end
 
   def handle_event(:cast, event, state, data) do
@@ -63,5 +76,11 @@ defmodule Risk.Game do
 
   def handle_event({:call, from}, :get_status, _state, data) do
     {:keep_state_and_data, [{:reply, from, data}]}
+  end
+
+  defp player_status(players) do
+    Enum.reduce(players, MapSet.new(), fn {_k, v}, acc ->
+      acc |> MapSet.put(v.status)
+    end)
   end
 end

@@ -8,10 +8,10 @@ Game states
       - Connecting - DONE
       - Ready - By consensus (when all connected say ready) - DONE
     * Preperation
-      - Color selection
-      - Task assignment
-      - Troop allocation
-      - RISK-card allocation
+      - Troop allocation - DONE
+      - Color selection - DONE
+    * Deployment
+      - Task assignment - Need to filter out color based tasks
       - Troop deployment
     * GAME
       - Reinforcements
