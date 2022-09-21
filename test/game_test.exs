@@ -6,13 +6,18 @@ defmodule GameTest do
     ctx = %Risk.GameContext{
       players: %{
         111 => %Risk.Player{name: "david", guid: 111, color: :red},
-        222 => %Risk.Player{name: "bertil", guid: 222, color: :yellow},
-        333 => %Risk.Player{name: "gudrun", guid: 333, color: :green}
+        222 => %Risk.Player{name: "bertil", guid: 222, color: :blue},
+        333 => %Risk.Player{name: "berit", guid: 333, color: :black},
+        444 => %Risk.Player{name: "nils", guid: 444, color: :gray},
+        555 => %Risk.Player{name: "sam", guid: 555, color: :yellow},
+        109 => %Risk.Player{name: "gudrun", guid: 109, color: :green}
       }
     }
 
-    _ctx = Risk.Game.Logic.assign_mission_cards(ctx)
-    # Come up with some clever test to check that requirements are fulfilled.
+    ctx = Risk.Game.Logic.assign_mission_cards(ctx)
+    for {_guid, player} <- ctx.players do
+      assert player.mission_card != nil
+    end
   end
 
   test "Game logic functions - Risk card assignment" do
