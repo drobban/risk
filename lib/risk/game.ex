@@ -20,6 +20,7 @@ defmodule Risk.Game do
 
   def handle_event(:enter, _event, :deployment = state, data) do
     # Assign mission cards
+    data = Logic.assign_mission_cards(data)
     Logger.debug("State: #{inspect(state)}")
     {:next_state, state, data}
   end

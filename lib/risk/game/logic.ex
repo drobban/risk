@@ -6,6 +6,23 @@ defmodule Risk.Game.Logic do
     end)
   end
 
+  def assign_mission_cards(ctx) do
+    colors =
+      Enum.reduce(ctx.players, [], fn {_k, player}, acc -> acc ++ [player.color] end) ++ [nil]
+
+    missions =
+      Enum.filter(ctx.mission_cards, fn mission -> Enum.member?(colors, mission.color_code) end)
+      |> Enum.shuffle()
+
+    players =
+      Enum.zip_reduce(missions, ctx.players, ctx.players, fn mission, {guid, player}, acc ->
+        player = player |> Map.put(:mission_card, mission)
+        acc |> Map.put(guid, player)
+      end)
+
+    ctx |> Map.put(:players, players)
+  end
+
   def assign_risk_cards(ctx) do
     card_list = Enum.shuffle(ctx.risk_cards)
 
