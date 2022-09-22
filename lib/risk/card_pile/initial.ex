@@ -1,5 +1,6 @@
 defmodule Risk.CardPile.Initial do
   alias Risk.RiskCard, as: RiskCard
+
   @moduledoc """
   The Initial module defines a initial struct to be used by the CardPile gen_server
 

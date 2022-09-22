@@ -6,7 +6,9 @@ defmodule Risk.Game do
   alias Risk.Game.Logic, as: Logic
 
   def start_link(name) do
-    GenStateMachine.start_link(Risk.Game, {:player_announcements, %GameContext{}},
+    {:ok, pid} = GenServer.start_link(Risk.CardPile, nil)
+
+    GenStateMachine.start_link(Risk.Game, {:player_announcements, %GameContext{card_pile: pid}},
       name: String.to_atom(name)
     )
   end

@@ -4,7 +4,8 @@ defmodule GameTest do
   use ExUnit.Case
 
   defp create_machine(_) do
-    {:ok, pid} = GenStateMachine.start_link(Risk.Game, {:player_announcements, %GameContext{}})
+    {:ok, pile_pid} = GenServer.start_link(Risk.CardPile, nil)
+    {:ok, pid} = GenStateMachine.start_link(Risk.Game, {:player_announcements, %GameContext{card_pile: pile_pid}})
 
     %{pid: pid}
   end

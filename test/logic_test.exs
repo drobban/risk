@@ -4,6 +4,7 @@ defmodule LogicTest do
 
   test "Game logic functions - Mission assignment" do
     ctx = %Risk.GameContext{
+      card_pile: "fake",
       players: %{
         111 => %Risk.Player{name: "david", guid: 111, color: :red},
         222 => %Risk.Player{name: "bertil", guid: 222, color: :blue},
@@ -22,7 +23,9 @@ defmodule LogicTest do
   end
 
   test "Game logic functions - Risk card assignment" do
+    {:ok, pid} = GenServer.start_link(Risk.CardPile, nil)
     ctx = %Risk.GameContext{
+      card_pile: pid,
       players: %{
         111 => %Risk.Player{name: "david", guid: 111, color: :red},
         222 => %Risk.Player{name: "bertil", guid: 222, color: :yellow},
@@ -38,5 +41,11 @@ defmodule LogicTest do
       end)
 
     assert sum == 42
+  end
+
+  test "card allocation" do
+    {:ok, pid} = GenServer.start_link(Risk.CardPile, nil)
+    players = [%Risk.Player{name: "111", guid: 111}, %Risk.Player{name: "111", guid: 111}, %Risk.Player{name: "111", guid: 111}]
+    Risk.Game.Logic.serve_until_joker(players, pid, nil)
   end
 end

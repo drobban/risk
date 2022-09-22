@@ -5,11 +5,10 @@ defmodule Risk.Game.Logic do
   def fillup(ctx) do
     n_players = Enum.count(ctx.players)
 
-    ctx =
-      Enum.reduce(ctx.players, ctx, fn {guid, player}, acc ->
-        player = player |> Map.put(:reinforcements, @army_size[n_players])
-        acc |> put_in([Access.key(:players), guid], player)
-      end)
+    Enum.reduce(ctx.players, ctx, fn {guid, player}, acc ->
+      player = player |> Map.put(:reinforcements, @army_size[n_players])
+      acc |> put_in([Access.key(:players), guid], player)
+    end)
   end
 
   def reset_player_status(players) do
@@ -37,37 +36,39 @@ defmodule Risk.Game.Logic do
   end
 
   def assign_risk_cards(ctx) do
-    card_list = Enum.shuffle(ctx.risk_cards)
-
     player_list =
       ctx.players |> Enum.reduce([], fn {_k, v}, acc -> [v | acc] end) |> Enum.shuffle()
 
-    handed_players = serve_until_empty(player_list, card_list)
+    handed_players = serve_until_joker(player_list, ctx.card_pile, nil)
+    # handed_players = serve_until_empty(player_list, card_list)
 
     Enum.reduce(handed_players, ctx, fn player, acc ->
       acc |> put_in([Access.key(:players), player.guid], player)
     end)
   end
 
-  def serve_until_empty(players, []) do
+  def serve_until_joker(players, card_pile, %Risk.RiskCard{territory: "Joker"} = card) do
+    :ok = GenServer.cast(card_pile, {:put, card})
     players
   end
 
-  def serve_until_empty(players, cards) do
+  def serve_until_joker(players, card_pile, card) do
+    card = if is_nil(card), do: GenServer.call(card_pile, :pick), else: card
+
     [player | rest] = players
-    {card, cards} = List.pop_at(cards, 0)
     player = player |> Map.put(:risk_cards, player.risk_cards ++ [card])
 
-    serve_until_empty(rest ++ [player], cards)
+    serve_until_joker(rest ++ [player], card_pile, GenServer.call(card_pile, :pick))
   end
 
   def set_if_legal(ctx, amount, territory_name, guid) do
     territory_names =
       Enum.reduce(ctx.players[guid].risk_cards, [], fn card, acc -> acc ++ [card.territory] end)
+
     territories = ctx.game_board.territories
     idx = Enum.find_index(territories, fn territory -> territory.name == territory_name end)
 
-    if Enum.member?(territory_names, territory_name) and ! is_nil(idx) do
+    if Enum.member?(territory_names, territory_name) and !is_nil(idx) do
       territories =
         List.update_at(territories, idx, fn territory -> territory |> Map.put(:forces, amount) end)
 

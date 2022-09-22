@@ -37,9 +37,9 @@ Risk cards
 
 GAME MACHINE
     
-    - add initialisation of CardPile.
-    - refactor GameContext to exclude risk_cards
-    - refactor game logic to take cards from CardPile instead.
+    - add initialisation of CardPile. - DONE
+    - refactor GameContext to exclude risk_cards - DONE
+    - refactor game logic to take cards from CardPile instead. - DONE
     
 Army
     
