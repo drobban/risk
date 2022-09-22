@@ -14,8 +14,10 @@ defmodule Risk.Game do
   end
 
   def handle_event(:enter, _event, :preperation = state, data) do
-    new_data = data |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
-    new_data = Logic.assign_risk_cards(new_data)
+    new_data =
+      data
+      |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
+      |> Logic.assign_risk_cards()
 
     Logger.debug("State: #{inspect(state)}")
     {:next_state, state, new_data}
@@ -23,16 +25,24 @@ defmodule Risk.Game do
 
   def handle_event(:enter, _event, :deployment = state, data) do
     # Assign mission cards
-    data = Logic.assign_mission_cards(data)
-    data = Logic.fillup(data)
+    new_data =
+      data
+      |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
+      |> Logic.assign_mission_cards()
+      |> Logic.fillup()
+
     Logger.debug("State: #{inspect(state)}")
-    {:next_state, state, data}
+    {:next_state, state, new_data}
   end
 
   def handle_event(:enter, _event, :game = state, data) do
+    new_data =
+      data
+      |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
+
     # Assign initial set of cards
     Logger.debug("State: #{inspect(state)}")
-    {:next_state, state, data}
+    {:next_state, state, new_data}
   end
 
   def handle_event(:enter, _event, state, data) do
@@ -87,11 +97,11 @@ defmodule Risk.Game do
 
   def handle_event(:cast, {:done, guid}, :deployment = state, data) do
     data =
-    if data.players[guid].reinforcements == 0 do
-      data |> put_in([Access.key(:players), guid, Access.key(:status)], :deploy_done)
-    else
-      data
-    end
+      if data.players[guid].reinforcements == 0 do
+        data |> put_in([Access.key(:players), guid, Access.key(:status)], :deploy_done)
+      else
+        data
+      end
 
     status = player_status(data.players)
 

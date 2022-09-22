@@ -24,6 +24,7 @@ defmodule LogicTest do
 
   test "Game logic functions - Risk card assignment" do
     {:ok, pid} = GenServer.start_link(Risk.CardPile, nil)
+
     ctx = %Risk.GameContext{
       card_pile: pid,
       players: %{
@@ -45,7 +46,13 @@ defmodule LogicTest do
 
   test "card allocation" do
     {:ok, pid} = GenServer.start_link(Risk.CardPile, nil)
-    players = [%Risk.Player{name: "111", guid: 111}, %Risk.Player{name: "111", guid: 111}, %Risk.Player{name: "111", guid: 111}]
+
+    players = [
+      %Risk.Player{name: "111", guid: 111},
+      %Risk.Player{name: "111", guid: 111},
+      %Risk.Player{name: "111", guid: 111}
+    ]
+
     Risk.Game.Logic.serve_until_joker(players, pid, nil)
   end
 end

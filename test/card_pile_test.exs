@@ -20,6 +20,7 @@ defmodule CardPileTest do
 
   test "Card pile added jokers to active" do
     {:ok, pid} = GenServer.start_link(Risk.CardPile, nil)
+
     for _x <- 1..42 do
       card = GenServer.call(pid, :pick)
       assert card != nil

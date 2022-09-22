@@ -5,7 +5,12 @@ defmodule GameTest do
 
   defp create_machine(_) do
     {:ok, pile_pid} = GenServer.start_link(Risk.CardPile, nil)
-    {:ok, pid} = GenStateMachine.start_link(Risk.Game, {:player_announcements, %GameContext{card_pile: pile_pid}})
+
+    {:ok, pid} =
+      GenStateMachine.start_link(
+        Risk.Game,
+        {:player_announcements, %GameContext{card_pile: pile_pid}}
+      )
 
     %{pid: pid}
   end
@@ -42,10 +47,6 @@ defmodule GameTest do
       assert ctx.players[112].mission_card != nil
       assert ctx.players[113].mission_card != nil
 
-      assert ctx.players[111].status == :color_done
-      assert ctx.players[112].status == :color_done
-      assert ctx.players[113].status == :color_done
-
       assert ctx.players[111].reinforcements == 35
       assert ctx.players[112].reinforcements == 35
       assert ctx.players[113].reinforcements == 35
@@ -66,7 +67,6 @@ defmodule GameTest do
 
       assert forces == 0
 
-
       :ok = GenStateMachine.cast(pid, {:done, 111})
       :ok = GenStateMachine.cast(pid, {:done, 112})
 
@@ -78,6 +78,5 @@ defmodule GameTest do
       status = Risk.Game.player_status(ctx.players)
       assert Enum.count(status) == 2
     end
-
   end
 end

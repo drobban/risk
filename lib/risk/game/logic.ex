@@ -72,7 +72,9 @@ defmodule Risk.Game.Logic do
 
     if members and !is_nil(idx) and size_ok do
       territories =
-        List.update_at(territories, idx, fn territory -> territory |> update_in([Access.key(:forces)], &(&1 + amount)) end)
+        List.update_at(territories, idx, fn territory ->
+          territory |> update_in([Access.key(:forces)], &(&1 + amount))
+        end)
 
       ctx
       |> put_in([Access.key(:game_board), Access.key(:territories)], territories)
