@@ -29,6 +29,12 @@ defmodule Risk.Game do
     {:next_state, state, data}
   end
 
+  def handle_event(:enter, _event, :game = state, data) do
+    # Assign initial set of cards
+    Logger.debug("State: #{inspect(state)}")
+    {:next_state, state, data}
+  end
+
   def handle_event(:enter, _event, state, data) do
     Logger.debug("State: #{inspect(state)}")
     {:next_state, state, data}
@@ -79,16 +85,35 @@ defmodule Risk.Game do
     {:next_state, state, data}
   end
 
+  def handle_event(:cast, {:done, guid}, :deployment = state, data) do
+    data =
+    if data.players[guid].reinforcements == 0 do
+      data |> put_in([Access.key(:players), guid, Access.key(:status)], :deploy_done)
+    else
+      data
+    end
+
+    status = player_status(data.players)
+
+    case MapSet.to_list(status) do
+      [:deploy_done] ->
+        {:next_state, :game, data}
+
+      _ ->
+        {:next_state, state, data}
+    end
+  end
+
   def handle_event(:cast, event, state, data) do
     Logger.debug("Event: #{inspect(event)} not accepted in State: #{inspect(state)}")
     {:next_state, state, data}
   end
 
-  def handle_event({:call, from}, :get_status, _state, data) do
+  def handle_event({:call, from}, :get_status, state, data) do
     {:keep_state_and_data, [{:reply, from, data}]}
   end
 
-  defp player_status(players) do
+  def player_status(players) do
     Enum.reduce(players, MapSet.new(), fn {_k, v}, acc ->
       acc |> MapSet.put(v.status)
     end)

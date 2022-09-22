@@ -67,12 +67,16 @@ defmodule Risk.Game.Logic do
 
     territories = ctx.game_board.territories
     idx = Enum.find_index(territories, fn territory -> territory.name == territory_name end)
+    members = Enum.member?(territory_names, territory_name)
+    size_ok = amount <= ctx.players[guid].reinforcements
 
-    if Enum.member?(territory_names, territory_name) and !is_nil(idx) do
+    if members and !is_nil(idx) and size_ok do
       territories =
-        List.update_at(territories, idx, fn territory -> territory |> Map.put(:forces, amount) end)
+        List.update_at(territories, idx, fn territory -> territory |> update_in([Access.key(:forces)], &(&1 + amount)) end)
 
-      ctx |> put_in([Access.key(:game_board), Access.key(:territories)], territories)
+      ctx
+      |> put_in([Access.key(:game_board), Access.key(:territories)], territories)
+      |> update_in([Access.key(:players), guid, Access.key(:reinforcements)], &(&1 - amount))
     else
       ctx
     end

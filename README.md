@@ -1,6 +1,7 @@
 # Risk
 
-**TODO: Add description**
+**TODO:**
+    Make sure every territory fulfills the rule of at least one troop
 
 Game states
 
@@ -12,7 +13,7 @@ Game states
       - Color selection - DONE
     * Deployment
       - Task assignment - Need to filter out color based tasks - DONE
-      - Troop deployment
+      - Troop deployment - DONE
     * GAME
       - Reinforcements
       - Battle

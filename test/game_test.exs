@@ -52,20 +52,32 @@ defmodule GameTest do
 
       card = Enum.at(ctx.players[111].risk_cards, 0)
       enemy_card = Enum.at(ctx.players[112].risk_cards, 0)
-      status = GenStateMachine.cast(pid, {:deploy, 10, card.territory, 111})
-      assert status == :ok
-      status = GenStateMachine.cast(pid, {:deploy, 10, enemy_card.territory, 111})
-      assert status == :ok
+      :ok = GenStateMachine.cast(pid, {:deploy, 10, card.territory, 111})
+      :ok = GenStateMachine.cast(pid, {:deploy, 10, enemy_card.territory, 111})
 
       ctx = GenStateMachine.call(pid, :get_status)
 
       forces = Enum.find(ctx.game_board.territories, fn x -> x.name == card.territory end).forces
       assert forces == 10
+      assert ctx.players[111].reinforcements == 25
 
       forces =
         Enum.find(ctx.game_board.territories, fn x -> x.name == enemy_card.territory end).forces
 
       assert forces == 0
+
+
+      :ok = GenStateMachine.cast(pid, {:done, 111})
+      :ok = GenStateMachine.cast(pid, {:done, 112})
+
+      card = Enum.at(ctx.players[113].risk_cards, 0)
+      :ok = GenStateMachine.cast(pid, {:deploy, 35, card.territory, 113})
+
+      :ok = GenStateMachine.cast(pid, {:done, 113})
+      ctx = GenStateMachine.call(pid, :get_status)
+      status = Risk.Game.player_status(ctx.players)
+      assert Enum.count(status) == 2
     end
+
   end
 end
