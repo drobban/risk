@@ -1,42 +1,70 @@
 defmodule GameTest do
   require Logger
+  alias Risk.GameContext, as: GameContext
   use ExUnit.Case
 
-  test "Game logic functions - Mission assignment" do
-    ctx = %Risk.GameContext{
-      players: %{
-        111 => %Risk.Player{name: "david", guid: 111, color: :red},
-        222 => %Risk.Player{name: "bertil", guid: 222, color: :blue},
-        333 => %Risk.Player{name: "berit", guid: 333, color: :black},
-        444 => %Risk.Player{name: "nils", guid: 444, color: :gray},
-        555 => %Risk.Player{name: "sam", guid: 555, color: :yellow},
-        109 => %Risk.Player{name: "gudrun", guid: 109, color: :green}
-      }
-    }
+  defp create_machine(_) do
+    {:ok, pid} = GenStateMachine.start_link(Risk.Game, {:player_announcements, %GameContext{}})
 
-    ctx = Risk.Game.Logic.assign_mission_cards(ctx)
-
-    for {_guid, player} <- ctx.players do
-      assert player.mission_card != nil
-    end
+    %{pid: pid}
   end
 
-  test "Game logic functions - Risk card assignment" do
-    ctx = %Risk.GameContext{
-      players: %{
-        111 => %Risk.Player{name: "david", guid: 111, color: :red},
-        222 => %Risk.Player{name: "bertil", guid: 222, color: :yellow},
-        333 => %Risk.Player{name: "gudrun", guid: 333, color: :green}
-      }
-    }
+  describe "Risk Game machine" do
+    setup [:create_machine]
 
-    ctx = Risk.Game.Logic.assign_risk_cards(ctx)
+    test "connections", %{pid: pid} do
+      status = GenStateMachine.cast(pid, {:connection, %Risk.Player{name: "David", guid: 111}})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {:connection, %Risk.Player{name: "Bertil", guid: 112}})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {:connection, %Risk.Player{name: "Ceasar", guid: 113}})
+      assert status == :ok
+      ctx = GenStateMachine.call(pid, :get_status)
+      assert Enum.count(ctx.players) == 3
 
-    sum =
-      Enum.reduce(ctx.players, 0, fn {_guid, player}, acc ->
-        acc + Enum.count(player.risk_cards)
-      end)
+      status = GenStateMachine.cast(pid, {:ready, 111})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {:ready, 112})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {:ready, 113})
+      assert status == :ok
 
-    assert sum == 42
+      status = GenStateMachine.cast(pid, {:color_select, :red, 111})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {:color_select, :blue, 112})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {:color_select, :green, 113})
+      assert status == :ok
+
+      ctx = GenStateMachine.call(pid, :get_status)
+      assert ctx.players[111].mission_card != nil
+      assert ctx.players[112].mission_card != nil
+      assert ctx.players[113].mission_card != nil
+
+      assert ctx.players[111].status == :color_done
+      assert ctx.players[112].status == :color_done
+      assert ctx.players[113].status == :color_done
+
+      assert ctx.players[111].reinforcements == 35
+      assert ctx.players[112].reinforcements == 35
+      assert ctx.players[113].reinforcements == 35
+
+      card = Enum.at(ctx.players[111].risk_cards, 0)
+      enemy_card = Enum.at(ctx.players[112].risk_cards, 0)
+      status = GenStateMachine.cast(pid, {:deploy, 10, card.territory, 111})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {:deploy, 10, enemy_card.territory, 111})
+      assert status == :ok
+
+      ctx = GenStateMachine.call(pid, :get_status)
+
+      forces = Enum.find(ctx.game_board.territories, fn x -> x.name == card.territory end).forces
+      assert forces == 10
+
+      forces =
+        Enum.find(ctx.game_board.territories, fn x -> x.name == enemy_card.territory end).forces
+
+      assert forces == 0
+    end
   end
 end
