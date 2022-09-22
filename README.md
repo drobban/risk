@@ -32,7 +32,14 @@ Risk cards
     
     - Troop value - DONE
     - Country - DONE
-    - Card pile
+
+    - Card pile - DONE
+
+GAME MACHINE
+    
+    - add initialisation of CardPile.
+    - refactor GameContext to exclude risk_cards
+    - refactor game logic to take cards from CardPile instead.
     
 Army
     
