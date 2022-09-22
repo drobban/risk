@@ -1,7 +1,11 @@
 # Risk
 
 **TODO:**
-    Make sure every territory fulfills the rule of at least one troop
+
+Make sure every territory fulfills the rule of at least one troop
+
+Give the gen_server judge / state machine game interaction some tought.
+
 
 Game states
 
@@ -41,6 +45,18 @@ GAME MACHINE
     - add initialisation of CardPile. - DONE
     - refactor GameContext to exclude risk_cards - DONE
     - refactor game logic to take cards from CardPile instead. - DONE
+    
+Judge
+    
+    * create state struct - DONE
+    * Inform players
+      - next player
+      - next phase 
+      - round over (Check victor)
+    * Implement game phases
+      1 Reinforcements
+      2 Battle
+      3 Troop movements
     
 Army
     

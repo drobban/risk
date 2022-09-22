@@ -5,6 +5,7 @@ defmodule LogicTest do
   test "Game logic functions - Mission assignment" do
     ctx = %Risk.GameContext{
       card_pile: "fake",
+      judge: "fake",
       players: %{
         111 => %Risk.Player{name: "david", guid: 111, color: :red},
         222 => %Risk.Player{name: "bertil", guid: 222, color: :blue},
@@ -23,16 +24,21 @@ defmodule LogicTest do
   end
 
   test "Game logic functions - Risk card assignment" do
-    {:ok, pid} = GenServer.start_link(Risk.CardPile, nil)
+    {:ok, card_pile} = GenServer.start_link(Risk.CardPile, nil)
+    {:ok, judge} = GenServer.start_link(Risk.Judge, nil)
 
     ctx = %Risk.GameContext{
-      card_pile: pid,
+      card_pile: card_pile,
+      judge: judge,
       players: %{
         111 => %Risk.Player{name: "david", guid: 111, color: :red},
         222 => %Risk.Player{name: "bertil", guid: 222, color: :yellow},
         333 => %Risk.Player{name: "gudrun", guid: 333, color: :green}
       }
     }
+    GenServer.cast(judge, {:add_player, ctx.players[111]})
+    GenServer.cast(judge, {:add_player, ctx.players[222]})
+    GenServer.cast(judge, {:add_player, ctx.players[333]})
 
     ctx = Risk.Game.Logic.assign_risk_cards(ctx)
 

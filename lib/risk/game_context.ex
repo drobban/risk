@@ -1,12 +1,12 @@
 defmodule Risk.GameContext do
   alias Risk.GameBoard, as: GameBoard
   alias Risk.MissionCard, as: MissionCard
-  alias Risk.RiskCard, as: RiskCard
   alias Risk.Continent, as: Continent
 
-  @enforce_keys [:card_pile]
+  @enforce_keys [:card_pile, :judge]
   defstruct [
     :card_pile,
+    :judge,
     players: %{},
     game_board: %GameBoard{},
     mission_cards: [

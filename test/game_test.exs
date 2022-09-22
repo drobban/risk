@@ -5,11 +5,12 @@ defmodule GameTest do
 
   defp create_machine(_) do
     {:ok, pile_pid} = GenServer.start_link(Risk.CardPile, nil)
+    {:ok, judge_pid} = GenServer.start_link(Risk.Judge, nil)
 
     {:ok, pid} =
       GenStateMachine.start_link(
         Risk.Game,
-        {:player_announcements, %GameContext{card_pile: pile_pid}}
+        {:player_announcements, %GameContext{card_pile: pile_pid, judge: judge_pid}}
       )
 
     %{pid: pid}

@@ -36,11 +36,9 @@ defmodule Risk.Game.Logic do
   end
 
   def assign_risk_cards(ctx) do
-    player_list =
-      ctx.players |> Enum.reduce([], fn {_k, v}, acc -> [v | acc] end) |> Enum.shuffle()
+    player_list = GenServer.call(ctx.judge, :get_play_order)
 
     handed_players = serve_until_joker(player_list, ctx.card_pile, nil)
-    # handed_players = serve_until_empty(player_list, card_list)
 
     Enum.reduce(handed_players, ctx, fn player, acc ->
       acc |> put_in([Access.key(:players), player.guid], player)

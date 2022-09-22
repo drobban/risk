@@ -6,9 +6,12 @@ defmodule Risk.Game do
   alias Risk.Game.Logic, as: Logic
 
   def start_link(name) do
-    {:ok, pid} = GenServer.start_link(Risk.CardPile, nil)
+    {:ok, card_pile} = GenServer.start_link(Risk.CardPile, nil)
+    {:ok, judge} = GenServer.start_link(Risk.Judge, nil)
 
-    GenStateMachine.start_link(Risk.Game, {:player_announcements, %GameContext{card_pile: pid}},
+    GenStateMachine.start_link(
+      Risk.Game,
+      {:player_announcements, %GameContext{card_pile: card_pile, judge: judge}},
       name: String.to_atom(name)
     )
   end
@@ -57,7 +60,9 @@ defmodule Risk.Game do
         data
       ) do
     players = data.players |> Map.put(player.guid, player)
+    GenServer.cast(data.judge, {:add_player, player})
     new_data = data |> Map.put(:players, players)
+
     {:next_state, state, new_data}
   end
 
@@ -119,7 +124,7 @@ defmodule Risk.Game do
     {:next_state, state, data}
   end
 
-  def handle_event({:call, from}, :get_status, state, data) do
+  def handle_event({:call, from}, :get_status, _state, data) do
     {:keep_state_and_data, [{:reply, from, data}]}
   end
 
