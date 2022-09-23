@@ -79,7 +79,6 @@ defmodule GameTest do
       status = Risk.Game.player_status(ctx.players)
       assert Enum.count(status) == 2
 
-
       # Deploy done
       card = Enum.at(ctx.players[111].risk_cards, 0)
       :ok = GenStateMachine.cast(pid, {:deploy, 25, card.territory, 111})
@@ -89,7 +88,6 @@ defmodule GameTest do
       {:game, next_player} = GenStateMachine.call(pid, {:done, 112})
 
       assert next_player != nil
-
     end
   end
 end

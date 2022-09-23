@@ -37,6 +37,7 @@ defmodule LogicTest do
         333 => %Risk.Player{name: "gudrun", guid: 333, color: :green}
       }
     }
+
     GenServer.cast(judge, {:add_player, ctx.players[111]})
     GenServer.cast(judge, {:add_player, ctx.players[222]})
     GenServer.cast(judge, {:add_player, ctx.players[333]})

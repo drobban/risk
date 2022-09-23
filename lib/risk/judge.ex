@@ -13,7 +13,6 @@ defmodule Risk.Judge do
     {:keep_state_and_data, []}
   end
 
-
   def handle_event(:cast, {:add_player, %Player{} = player}, :init = state, ctx) do
     new_ctx = ctx |> update_in([Access.key(:play_order)], &Enum.shuffle(&1 ++ [player]))
     {:next_state, state, new_ctx}
@@ -56,5 +55,4 @@ defmodule Risk.Judge do
 
     {:next_state, state, ctx, [{:reply, from, next}]}
   end
-
 end
