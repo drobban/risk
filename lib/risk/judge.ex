@@ -9,7 +9,7 @@ defmodule Risk.Judge do
   end
 
   def handle_event(:enter, _event, state, _ctx) do
-    Logger.debug("Entered: #{state}")
+    # Logger.debug("Entered: #{state}")
     {:keep_state_and_data, []}
   end
 
@@ -18,9 +18,20 @@ defmodule Risk.Judge do
     {:next_state, state, new_ctx}
   end
 
-  def handle_event({:call, from}, :done, :init, ctx) do
+  def handle_event({:call, from}, :done, :init = state, ctx) do
+    handle_event({:call, from}, :next_phase, state, ctx)
+  end
+
+  def handle_event({:call, from}, :done, :re_step1 = state, ctx) do
     # Add some checking, perhaps more then one player is a requirement?
-    {:next_state, :new_round, ctx, [{:reply, from, :new_round}]}
+    # {:next_state, :re_step1, ctx, [{:reply, from, :re_step1}]}
+    handle_event({:call, from}, :next_phase, state, ctx)
+  end
+
+  def handle_event({:call, from}, :done, :re_step2 = state, ctx) do
+    # Add some checking, perhaps more then one player is a requirement?
+    # {:next_state, :re_step1, ctx, [{:reply, from, :re_step1}]}
+    handle_event({:call, from}, :next_phase, state, ctx)
   end
 
   def handle_event({:call, from}, :done, :check_victor, ctx) do
@@ -29,6 +40,10 @@ defmodule Risk.Judge do
 
   def handle_event({:call, from}, :get_play_order, _state, ctx) do
     {:keep_state_and_data, [{:reply, from, ctx.play_order}]}
+  end
+
+  def handle_event({:call, from}, :get_status, _state, ctx) do
+    {:keep_state_and_data, [{:reply, from, ctx}]}
   end
 
   def handle_event({:call, from}, :next_player, state, ctx) do
@@ -53,6 +68,6 @@ defmodule Risk.Judge do
       |> Map.put(:phases, phases)
       |> Map.put(:current_phase, next)
 
-    {:next_state, state, ctx, [{:reply, from, next}]}
+    {:next_state, next, ctx, [{:reply, from, next}]}
   end
 end

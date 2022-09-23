@@ -88,6 +88,10 @@ defmodule GameTest do
       {:game, next_player} = GenStateMachine.call(pid, {:done, 112})
 
       assert next_player != nil
+      {state, status} = GenStateMachine.call(pid, {:done, next_player.guid})
+      assert status == :re_step2
+      {state, status} = GenStateMachine.call(pid, {:done, 666})
+      assert status == :wrong_user
     end
   end
 end

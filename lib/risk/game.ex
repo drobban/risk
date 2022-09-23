@@ -73,6 +73,7 @@ defmodule Risk.Game do
 
     case MapSet.to_list(status) do
       [:done] ->
+        :re_step1 = GenStateMachine.call(data.judge, :done)
         {:next_state, :preperation, data}
 
       _ ->
@@ -119,6 +120,19 @@ defmodule Risk.Game do
 
       _ ->
         {:next_state, state, data, [{:reply, from, {state, nil}}]}
+    end
+  end
+
+  def handle_event({:call, from}, {:done, guid}, :game = state, ctx) do
+    judge_ctx = GenStateMachine.call(ctx.judge, :get_status)
+    case judge_ctx.current_player.guid do
+      ^guid ->
+        # perform task
+        next_phase = GenStateMachine.call(ctx.judge, :done)
+        {:next_state, state, ctx, [{:reply, from, {state, next_phase}}]}
+      _ ->
+        {:next_state, state, ctx, [{:reply, from, {state, :wrong_user}}]}
+
     end
   end
 
