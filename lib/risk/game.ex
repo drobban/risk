@@ -101,6 +101,7 @@ defmodule Risk.Game do
   end
 
   def handle_event({:call, from}, {:done, guid}, :deployment = state, data) do
+    # Need to check that all territories have at least one troop.
     data =
       if data.players[guid].reinforcements == 0 do
         data |> put_in([Access.key(:players), guid, Access.key(:status)], :deploy_done)
