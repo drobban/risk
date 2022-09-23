@@ -1,7 +1,7 @@
 defmodule Risk.Game do
   require Logger
   use GenStateMachine, callback_mode: [:handle_event_function, :state_enter]
-  alias Risk.GameContext, as: GameContext
+  alias Risk.Game.Context, as: GameContext
   alias Risk.Player, as: Player
   alias Risk.Game.Logic, as: Logic
 

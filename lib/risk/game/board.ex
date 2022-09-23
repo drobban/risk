@@ -1,4 +1,4 @@
-defmodule Risk.GameBoard do
+defmodule Risk.Game.Board do
   alias Risk.Territory, as: Territory
 
   defstruct territories: [

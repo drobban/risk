@@ -1,9 +1,10 @@
 defmodule LogicTest do
   require Logger
   use ExUnit.Case
+  alias Risk.Game.Context, as: GameContext
 
   test "Game logic functions - Mission assignment" do
-    ctx = %Risk.GameContext{
+    ctx = %GameContext{
       card_pile: "fake",
       judge: "fake",
       players: %{
@@ -27,7 +28,7 @@ defmodule LogicTest do
     {:ok, card_pile} = GenServer.start_link(Risk.CardPile, nil)
     {:ok, judge} = Risk.Judge.start_link()
 
-    ctx = %Risk.GameContext{
+    ctx = %GameContext{
       card_pile: card_pile,
       judge: judge,
       players: %{

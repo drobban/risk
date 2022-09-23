@@ -1,5 +1,5 @@
-defmodule Risk.GameContext do
-  alias Risk.GameBoard, as: GameBoard
+defmodule Risk.Game.Context do
+  alias Risk.Game.Board, as: GameBoard
   alias Risk.MissionCard, as: MissionCard
   alias Risk.Continent, as: Continent
 

@@ -1,6 +1,6 @@
 defmodule GameTest do
   require Logger
-  alias Risk.GameContext, as: GameContext
+  alias Risk.Game.Context, as: GameContext
   use ExUnit.Case
 
   defp create_machine(_) do
