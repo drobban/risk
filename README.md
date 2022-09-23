@@ -6,6 +6,8 @@ Make sure every territory fulfills the rule of at least one troop
 
 Give the gen_server judge / state machine game interaction some tought.
 
+Refactor Judge, from gen_server to statemachine.
+
 
 Game states
 
