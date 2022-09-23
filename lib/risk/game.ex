@@ -7,7 +7,7 @@ defmodule Risk.Game do
 
   def start_link(name) do
     {:ok, card_pile} = GenServer.start_link(Risk.CardPile, nil)
-    {:ok, judge} = GenServer.start_link(Risk.Judge, nil)
+    {:ok, judge} = Risk.Judge.start_link()
 
     GenStateMachine.start_link(
       Risk.Game,

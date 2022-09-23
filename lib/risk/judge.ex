@@ -1,53 +1,60 @@
 defmodule Risk.Judge do
-  use GenServer
+  require Logger
+  use GenStateMachine, callback_mode: [:handle_event_function, :state_enter]
+  alias Risk.Judge.Context, as: Context
+  alias Risk.Player, as: Player
 
-  @impl true
-  def init(_state) do
-    state = %Risk.Judge.State{}
-    {:ok, state}
+  def start_link() do
+    GenStateMachine.start_link(Risk.Judge, {:init, %Context{}})
   end
 
-  @impl true
-  def handle_cast({:add_player, %Risk.Player{} = player}, state) do
-    state = state |> update_in([Access.key(:play_order)], &Enum.shuffle(&1 ++ [player]))
-    {:noreply, state}
+  def handle_event(:enter, _event, state, _ctx) do
+    Logger.debug("Entered: #{state}")
+    {:keep_state_and_data, []}
   end
 
-  def handle_cast({:battle_setup, %Risk.Judge.BattleGround{} = bg}, state) do
-    state = state |> Map.put(:battle_ground, bg)
-    {:noreply, state}
+
+  def handle_event(:cast, {:add_player, %Player{} = player}, :init = state, ctx) do
+    new_ctx = ctx |> update_in([Access.key(:play_order)], &Enum.shuffle(&1 ++ [player]))
+    {:next_state, state, new_ctx}
   end
 
-  @impl true
-  def handle_call(:get_play_order, _from, state) do
-    {:reply, state.play_order, state}
+  def handle_event({:call, from}, :done, :init, ctx) do
+    # Add some checking, perhaps more then one player is a requirement?
+    {:next_state, :new_round, ctx, [{:reply, from, :new_round}]}
   end
 
-  @impl true
-  def handle_call(:next_player, _from, state) do
-    [next | players] = state.play_order
+  def handle_event({:call, from}, :done, :check_victor, ctx) do
+    {:next_state, :new_round, ctx, [{:reply, from, :new_round}]}
+  end
 
-    players =
-      if !is_nil(state.current_player), do: players ++ [state.current_player], else: players
+  def handle_event({:call, from}, :get_play_order, _state, ctx) do
+    {:keep_state_and_data, [{:reply, from, ctx.play_order}]}
+  end
 
-    state =
-      state
+  def handle_event({:call, from}, :next_player, state, ctx) do
+    [next | players] = ctx.play_order
+
+    players = if !is_nil(ctx.current_player), do: players ++ [ctx.current_player], else: players
+
+    ctx =
+      ctx
       |> Map.put(:play_order, players)
       |> Map.put(:current_player, next)
 
-    {:reply, next, state}
+    {:next_state, state, ctx, [{:reply, from, next}]}
   end
 
-  @impl true
-  def handle_call(:next_phase, _from, state) do
-    [next | phases] = state.phases
-    phases = if !is_nil(state.current_phase), do: phases ++ [state.current_phase], else: phases
+  def handle_event({:call, from}, :next_phase, state, ctx) do
+    [next | phases] = ctx.phases
+    phases = if !is_nil(ctx.current_phase), do: phases ++ [ctx.current_phase], else: phases
 
-    state =
-      state
+    ctx =
+      ctx
       |> Map.put(:phases, phases)
       |> Map.put(:current_phase, next)
 
-    {:reply, next, state}
+    {:next_state, state, ctx, [{:reply, from, next}]}
   end
+
 end

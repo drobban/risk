@@ -25,7 +25,7 @@ defmodule LogicTest do
 
   test "Game logic functions - Risk card assignment" do
     {:ok, card_pile} = GenServer.start_link(Risk.CardPile, nil)
-    {:ok, judge} = GenServer.start_link(Risk.Judge, nil)
+    {:ok, judge} = Risk.Judge.start_link()
 
     ctx = %Risk.GameContext{
       card_pile: card_pile,
