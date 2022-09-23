@@ -113,10 +113,11 @@ defmodule Risk.Game do
     case MapSet.to_list(status) do
       [:deploy_done] ->
         # Start it up. lets play and inform who is first up
-        {:next_state, :game, data, [{:reply, from, {:game, "player"}}]}
+        next_player = GenStateMachine.call(data.judge, :next_player)
+        {:next_state, :game, data, [{:reply, from, {:game, next_player}}]}
 
       _ ->
-        {:next_state, state, data, [{:reply, from, {:game, state}}]}
+        {:next_state, state, data, [{:reply, from, {state, nil}}]}
     end
   end
 
