@@ -13,6 +13,11 @@ defmodule Risk.Judge do
     {:noreply, state}
   end
 
+  def handle_cast({:battle_setup, %Risk.Judge.BattleGround{} = bg}, state) do
+    state = state |> Map.put(:battle_ground, bg)
+    {:noreply, state}
+  end
+
   @impl true
   def handle_call(:get_play_order, _from, state) do
     {:reply, state.play_order, state}
@@ -21,7 +26,9 @@ defmodule Risk.Judge do
   @impl true
   def handle_call(:next_player, _from, state) do
     [next | players] = state.play_order
-    players = if !is_nil(state.current_player), do: players ++ [state.current_player], else: players
+
+    players =
+      if !is_nil(state.current_player), do: players ++ [state.current_player], else: players
 
     state =
       state
