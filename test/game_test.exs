@@ -68,13 +68,13 @@ defmodule GameTest do
 
       assert forces == 0
 
-      :ok = GenStateMachine.cast(pid, {:done, 111})
-      :ok = GenStateMachine.cast(pid, {:done, 112})
+      {_state, _data} = GenStateMachine.call(pid, {:done, 111})
+      {_state, _data} = GenStateMachine.call(pid, {:done, 112})
 
       card = Enum.at(ctx.players[113].risk_cards, 0)
       :ok = GenStateMachine.cast(pid, {:deploy, 35, card.territory, 113})
 
-      :ok = GenStateMachine.cast(pid, {:done, 113})
+      {_state, _data} = GenStateMachine.call(pid, {:done, 113})
       ctx = GenStateMachine.call(pid, :get_status)
       status = Risk.Game.player_status(ctx.players)
       assert Enum.count(status) == 2

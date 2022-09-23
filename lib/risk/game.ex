@@ -100,7 +100,7 @@ defmodule Risk.Game do
     {:next_state, state, data}
   end
 
-  def handle_event(:cast, {:done, guid}, :deployment = state, data) do
+  def handle_event({:call, from}, {:done, guid}, :deployment = state, data) do
     data =
       if data.players[guid].reinforcements == 0 do
         data |> put_in([Access.key(:players), guid, Access.key(:status)], :deploy_done)
@@ -112,10 +112,11 @@ defmodule Risk.Game do
 
     case MapSet.to_list(status) do
       [:deploy_done] ->
-        {:next_state, :game, data}
+        # Start it up. lets play and inform who is first up
+        {:next_state, :game, data, [{:reply, from, {:game, "player"}}]}
 
       _ ->
-        {:next_state, state, data}
+        {:next_state, state, data, [{:reply, from, {:game, state}}]}
     end
   end
 
