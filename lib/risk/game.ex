@@ -4,6 +4,7 @@ defmodule Risk.Game do
   alias Risk.Game.Context, as: GameContext
   alias Risk.Player, as: Player
   alias Risk.Game.Logic, as: Logic
+  alias Risk.Game.Event, as: GameEvent
 
   def start_link(name) do
     {:ok, card_pile} = GenServer.start_link(Risk.CardPile, nil)
@@ -101,7 +102,7 @@ defmodule Risk.Game do
     {:next_state, state, data}
   end
 
-  def handle_event({:call, from}, {:done, guid}, :deployment = state, data) do
+  def handle_event({:call, from}, {GameEvent.Done, guid}, :deployment = state, data) do
     # Need to check that all territories have at least one troop.
     data =
       if data.players[guid].reinforcements == 0 do
@@ -125,14 +126,15 @@ defmodule Risk.Game do
 
   def handle_event({:call, from}, {:done, guid}, :game = state, ctx) do
     judge_ctx = GenStateMachine.call(ctx.judge, :get_status)
+
     case judge_ctx.current_player.guid do
       ^guid ->
         # perform task
         next_phase = GenStateMachine.call(ctx.judge, :done)
         {:next_state, state, ctx, [{:reply, from, {state, next_phase}}]}
+
       _ ->
         {:next_state, state, ctx, [{:reply, from, {state, :wrong_user}}]}
-
     end
   end
 
