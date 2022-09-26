@@ -6,9 +6,11 @@ Make sure every territory fulfills the rule of at least one troop
 
 Refactor Judge, from gen_server to statemachine. - DONE
 
-Implemented enumed events, will help to identify mistakes.
+Implemented enumed events, will help to identify mistakes. - DONE
 
-Implement enumed states, will help to identify mistakes and hopefully keep track of all valid states.
+Implement enumed states, will help to identify mistakes and hopefully keep track of all valid states. - DONE
+
+Change most cast's to calls. this keeps coms in sync. Keep get_status and equivalent as cast's
 
 Game states
 
