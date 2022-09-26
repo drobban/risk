@@ -13,12 +13,12 @@ defmodule Risk.Game do
 
     GenStateMachine.start_link(
       Risk.Game,
-      {:player_announcements, %GameContext{card_pile: card_pile, judge: judge}},
+      {GameState.PlayerAnnouncement, %GameContext{card_pile: card_pile, judge: judge}},
       name: String.to_atom(name)
     )
   end
 
-  def handle_event(:enter, _event, :preperation = state, data) do
+  def handle_event(:enter, _event, GameState.Preperation = state, data) do
     new_data =
       data
       |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
@@ -40,7 +40,7 @@ defmodule Risk.Game do
     {:next_state, state, new_data}
   end
 
-  def handle_event(:enter, _event, :game = state, data) do
+  def handle_event(:enter, _event, GameState.Game = state, data) do
     new_data =
       data
       |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
@@ -57,8 +57,8 @@ defmodule Risk.Game do
 
   def handle_event(
         :cast,
-        {:connection, %Player{} = player} = _event,
-        :player_announcements = state,
+        {GameEvent.Connection, %Player{} = player} = _event,
+        GameState.PlayerAnnouncement = state,
         data
       ) do
     players = data.players |> Map.put(player.guid, player)
@@ -68,7 +68,12 @@ defmodule Risk.Game do
     {:next_state, state, new_data}
   end
 
-  def handle_event(:cast, {:ready, guid} = _event, :player_announcements = state, data) do
+  def handle_event(
+        :cast,
+        {GameEvent.Ready, guid} = _event,
+        GameState.PlayerAnnouncement = state,
+        data
+      ) do
     data = data |> put_in([Access.key(:players), guid, Access.key(:status)], :done)
 
     status = player_status(data.players)
@@ -76,14 +81,19 @@ defmodule Risk.Game do
     case MapSet.to_list(status) do
       [:done] ->
         :re_step1 = GenStateMachine.call(data.judge, :done)
-        {:next_state, :preperation, data}
+        {:next_state, GameState.Preperation, data}
 
       _ ->
         {:next_state, state, data}
     end
   end
 
-  def handle_event(:cast, {:color_select, color, guid}, :preperation = state, data) do
+  def handle_event(
+        :cast,
+        {GameEvent.ColorSelect, color, guid},
+        GameState.Preperation = state,
+        data
+      ) do
     data = data |> put_in([Access.key(:players), guid, Access.key(:color)], color)
     data = data |> put_in([Access.key(:players), guid, Access.key(:status)], :color_done)
 
@@ -98,7 +108,12 @@ defmodule Risk.Game do
     end
   end
 
-  def handle_event(:cast, {:deploy, amount, territory, guid}, GameState.Deployment = state, data) do
+  def handle_event(
+        :cast,
+        {GameEvent.Deploy, amount, territory, guid},
+        GameState.Deployment = state,
+        data
+      ) do
     data = Logic.set_if_legal(data, amount, territory, guid)
     {:next_state, state, data}
   end
@@ -118,14 +133,14 @@ defmodule Risk.Game do
       [:deploy_done] ->
         # Start it up. lets play and inform who is first up
         next_player = GenStateMachine.call(data.judge, :next_player)
-        {:next_state, :game, data, [{:reply, from, {:game, next_player}}]}
+        {:next_state, GameState.Game, data, [{:reply, from, {GameState.Game, next_player}}]}
 
       _ ->
         {:next_state, state, data, [{:reply, from, {state, nil}}]}
     end
   end
 
-  def handle_event({:call, from}, {:done, guid}, :game = state, ctx) do
+  def handle_event({:call, from}, {GameEvent.Done, guid}, GameState.Game = state, ctx) do
     judge_ctx = GenStateMachine.call(ctx.judge, :get_status)
 
     case judge_ctx.current_player.guid do
@@ -144,7 +159,7 @@ defmodule Risk.Game do
     {:next_state, state, data}
   end
 
-  def handle_event({:call, from}, :get_status, _state, data) do
+  def handle_event({:call, from}, GameEvent.GetStatus, _state, data) do
     {:keep_state_and_data, [{:reply, from, data}]}
   end
 

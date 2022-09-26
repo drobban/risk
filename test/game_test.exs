@@ -12,7 +12,7 @@ defmodule GameTest do
     {:ok, pid} =
       GenStateMachine.start_link(
         Risk.Game,
-        {:player_announcements, %GameContext{card_pile: pile_pid, judge: judge_pid}}
+        {GameState.PlayerAnnouncement, %GameContext{card_pile: pile_pid, judge: judge_pid}}
       )
 
     %{pid: pid}
@@ -22,30 +22,38 @@ defmodule GameTest do
     setup [:create_machine]
 
     test "connections", %{pid: pid} do
-      status = GenStateMachine.cast(pid, {:connection, %Risk.Player{name: "David", guid: 111}})
+      status =
+        GenStateMachine.cast(pid, {GameEvent.Connection, %Risk.Player{name: "David", guid: 111}})
+
       assert status == :ok
-      status = GenStateMachine.cast(pid, {:connection, %Risk.Player{name: "Bertil", guid: 112}})
+
+      status =
+        GenStateMachine.cast(pid, {GameEvent.Connection, %Risk.Player{name: "Bertil", guid: 112}})
+
       assert status == :ok
-      status = GenStateMachine.cast(pid, {:connection, %Risk.Player{name: "Ceasar", guid: 113}})
+
+      status =
+        GenStateMachine.cast(pid, {GameEvent.Connection, %Risk.Player{name: "Ceasar", guid: 113}})
+
       assert status == :ok
-      ctx = GenStateMachine.call(pid, :get_status)
+      ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
       assert Enum.count(ctx.players) == 3
 
-      status = GenStateMachine.cast(pid, {:ready, 111})
+      status = GenStateMachine.cast(pid, {GameEvent.Ready, 111})
       assert status == :ok
-      status = GenStateMachine.cast(pid, {:ready, 112})
+      status = GenStateMachine.cast(pid, {GameEvent.Ready, 112})
       assert status == :ok
-      status = GenStateMachine.cast(pid, {:ready, 113})
-      assert status == :ok
-
-      status = GenStateMachine.cast(pid, {:color_select, :red, 111})
-      assert status == :ok
-      status = GenStateMachine.cast(pid, {:color_select, :blue, 112})
-      assert status == :ok
-      status = GenStateMachine.cast(pid, {:color_select, :green, 113})
+      status = GenStateMachine.cast(pid, {GameEvent.Ready, 113})
       assert status == :ok
 
-      ctx = GenStateMachine.call(pid, :get_status)
+      status = GenStateMachine.cast(pid, {GameEvent.ColorSelect, :red, 111})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {GameEvent.ColorSelect, :blue, 112})
+      assert status == :ok
+      status = GenStateMachine.cast(pid, {GameEvent.ColorSelect, :green, 113})
+      assert status == :ok
+
+      ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
       assert ctx.players[111].mission_card != nil
       assert ctx.players[112].mission_card != nil
       assert ctx.players[113].mission_card != nil
@@ -56,10 +64,10 @@ defmodule GameTest do
 
       card = Enum.at(ctx.players[111].risk_cards, 0)
       enemy_card = Enum.at(ctx.players[112].risk_cards, 0)
-      :ok = GenStateMachine.cast(pid, {:deploy, 10, card.territory, 111})
-      :ok = GenStateMachine.cast(pid, {:deploy, 10, enemy_card.territory, 111})
+      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 10, card.territory, 111})
+      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 10, enemy_card.territory, 111})
 
-      ctx = GenStateMachine.call(pid, :get_status)
+      ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
 
       forces = Enum.find(ctx.game_board.territories, fn x -> x.name == card.territory end).forces
       assert forces == 10
@@ -74,25 +82,25 @@ defmodule GameTest do
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 112})
 
       card = Enum.at(ctx.players[113].risk_cards, 0)
-      :ok = GenStateMachine.cast(pid, {:deploy, 35, card.territory, 113})
+      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 35, card.territory, 113})
 
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 113})
-      ctx = GenStateMachine.call(pid, :get_status)
+      ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
       status = Risk.Game.player_status(ctx.players)
       assert Enum.count(status) == 2
 
       # Deploy done
       card = Enum.at(ctx.players[111].risk_cards, 0)
-      :ok = GenStateMachine.cast(pid, {:deploy, 25, card.territory, 111})
+      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 25, card.territory, 111})
       card = Enum.at(ctx.players[112].risk_cards, 0)
-      :ok = GenStateMachine.cast(pid, {:deploy, 35, card.territory, 112})
+      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 35, card.territory, 112})
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 111})
-      {:game, next_player} = GenStateMachine.call(pid, {GameEvent.Done, 112})
+      {GameState.Game, next_player} = GenStateMachine.call(pid, {GameEvent.Done, 112})
 
       assert next_player != nil
-      {state, status} = GenStateMachine.call(pid, {:done, next_player.guid})
+      {state, status} = GenStateMachine.call(pid, {GameEvent.Done, next_player.guid})
       assert status == :re_step2
-      {state, status} = GenStateMachine.call(pid, {:done, 666})
+      {state, status} = GenStateMachine.call(pid, {GameEvent.Done, 666})
       assert status == :wrong_user
     end
   end
