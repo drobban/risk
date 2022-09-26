@@ -155,6 +155,10 @@ defmodule Risk.Game do
   end
 
   def handle_event(:cast, event, state, data) do
+    valid_event = Enum.member?(GameEvent.enums, event)
+    valid_state = Enum.member?(GameState.enums, state)
+    Logger.debug("Event #{inspect(event)} is valid: #{valid_event}")
+    Logger.debug("Event #{inspect(state)} is valid: #{valid_state}")
     Logger.debug("Event: #{inspect(event)} not accepted in State: #{inspect(state)}")
     {:next_state, state, data}
   end
