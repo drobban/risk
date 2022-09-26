@@ -1,6 +1,7 @@
 defmodule GameTest do
   require Logger
   alias Risk.Game.Context, as: GameContext
+  alias Risk.Game.State, as: GameState
   alias Risk.Game.Event, as: GameEvent
   use ExUnit.Case
 
@@ -69,13 +70,13 @@ defmodule GameTest do
 
       assert forces == 0
 
-      {:deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 111})
-      {:deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 112})
+      {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 111})
+      {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 112})
 
       card = Enum.at(ctx.players[113].risk_cards, 0)
       :ok = GenStateMachine.cast(pid, {:deploy, 35, card.territory, 113})
 
-      {:deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 113})
+      {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 113})
       ctx = GenStateMachine.call(pid, :get_status)
       status = Risk.Game.player_status(ctx.players)
       assert Enum.count(status) == 2
@@ -85,7 +86,7 @@ defmodule GameTest do
       :ok = GenStateMachine.cast(pid, {:deploy, 25, card.territory, 111})
       card = Enum.at(ctx.players[112].risk_cards, 0)
       :ok = GenStateMachine.cast(pid, {:deploy, 35, card.territory, 112})
-      {:deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 111})
+      {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 111})
       {:game, next_player} = GenStateMachine.call(pid, {GameEvent.Done, 112})
 
       assert next_player != nil

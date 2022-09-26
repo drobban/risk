@@ -5,6 +5,7 @@ defmodule Risk.Game do
   alias Risk.Player, as: Player
   alias Risk.Game.Logic, as: Logic
   alias Risk.Game.Event, as: GameEvent
+  alias Risk.Game.State, as: GameState
 
   def start_link(name) do
     {:ok, card_pile} = GenServer.start_link(Risk.CardPile, nil)
@@ -27,7 +28,7 @@ defmodule Risk.Game do
     {:next_state, state, new_data}
   end
 
-  def handle_event(:enter, _event, :deployment = state, data) do
+  def handle_event(:enter, _event, GameState.Deployment = state, data) do
     # Assign mission cards
     new_data =
       data
@@ -90,19 +91,19 @@ defmodule Risk.Game do
 
     case MapSet.to_list(status) do
       [:color_done] ->
-        {:next_state, :deployment, data}
+        {:next_state, GameState.Deployment, data}
 
       _ ->
         {:next_state, state, data}
     end
   end
 
-  def handle_event(:cast, {:deploy, amount, territory, guid}, :deployment = state, data) do
+  def handle_event(:cast, {:deploy, amount, territory, guid}, GameState.Deployment = state, data) do
     data = Logic.set_if_legal(data, amount, territory, guid)
     {:next_state, state, data}
   end
 
-  def handle_event({:call, from}, {GameEvent.Done, guid}, :deployment = state, data) do
+  def handle_event({:call, from}, {GameEvent.Done, guid}, GameState.Deployment = state, data) do
     # Need to check that all territories have at least one troop.
     data =
       if data.players[guid].reinforcements == 0 do
