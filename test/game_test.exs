@@ -22,36 +22,25 @@ defmodule GameTest do
     setup [:create_machine]
 
     test "connections", %{pid: pid} do
-      status =
-        GenStateMachine.cast(pid, {GameEvent.Connection, %Risk.Player{name: "David", guid: 111}})
+      {GameState.PlayerAnnouncement, _} =
+        GenStateMachine.call(pid, {GameEvent.Connection, %Risk.Player{name: "David", guid: 111}})
 
-      assert status == :ok
+      {GameState.PlayerAnnouncement, _} =
+        GenStateMachine.call(pid, {GameEvent.Connection, %Risk.Player{name: "Bertil", guid: 112}})
 
-      status =
-        GenStateMachine.cast(pid, {GameEvent.Connection, %Risk.Player{name: "Bertil", guid: 112}})
+      {GameState.PlayerAnnouncement, _} =
+        GenStateMachine.call(pid, {GameEvent.Connection, %Risk.Player{name: "Ceasar", guid: 113}})
 
-      assert status == :ok
-
-      status =
-        GenStateMachine.cast(pid, {GameEvent.Connection, %Risk.Player{name: "Ceasar", guid: 113}})
-
-      assert status == :ok
       ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
       assert Enum.count(ctx.players) == 3
 
-      status = GenStateMachine.cast(pid, {GameEvent.Ready, 111})
-      assert status == :ok
-      status = GenStateMachine.cast(pid, {GameEvent.Ready, 112})
-      assert status == :ok
-      status = GenStateMachine.cast(pid, {GameEvent.Ready, 113})
-      assert status == :ok
+      status = GenStateMachine.call(pid, {GameEvent.Ready, 111})
+      status = GenStateMachine.call(pid, {GameEvent.Ready, 112})
+      status = GenStateMachine.call(pid, {GameEvent.Ready, 113})
 
-      status = GenStateMachine.cast(pid, {GameEvent.ColorSelect, :red, 111})
-      assert status == :ok
-      status = GenStateMachine.cast(pid, {GameEvent.ColorSelect, :blue, 112})
-      assert status == :ok
-      status = GenStateMachine.cast(pid, {GameEvent.ColorSelect, :green, 113})
-      assert status == :ok
+      {GameState.Preperation, _} = GenStateMachine.call(pid, {GameEvent.ColorSelect, :red, 111})
+      {GameState.Preperation, _} = GenStateMachine.call(pid, {GameEvent.ColorSelect, :blue, 112})
+      {GameState.Preperation, _} = GenStateMachine.call(pid, {GameEvent.ColorSelect, :green, 113})
 
       ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
       assert ctx.players[111].mission_card != nil
@@ -64,8 +53,8 @@ defmodule GameTest do
 
       card = Enum.at(ctx.players[111].risk_cards, 0)
       enemy_card = Enum.at(ctx.players[112].risk_cards, 0)
-      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 10, card.territory, 111})
-      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 10, enemy_card.territory, 111})
+      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 10, card.territory, 111})
+      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 10, enemy_card.territory, 111})
 
       ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
 
@@ -82,7 +71,7 @@ defmodule GameTest do
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 112})
 
       card = Enum.at(ctx.players[113].risk_cards, 0)
-      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 35, card.territory, 113})
+      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 35, card.territory, 113})
 
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 113})
       ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
@@ -91,9 +80,9 @@ defmodule GameTest do
 
       # Deploy done
       card = Enum.at(ctx.players[111].risk_cards, 0)
-      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 25, card.territory, 111})
+      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 25, card.territory, 111})
       card = Enum.at(ctx.players[112].risk_cards, 0)
-      :ok = GenStateMachine.cast(pid, {GameEvent.Deploy, 35, card.territory, 112})
+      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 35, card.territory, 112})
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 111})
       {GameState.Game, next_player} = GenStateMachine.call(pid, {GameEvent.Done, 112})
 

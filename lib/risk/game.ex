@@ -56,7 +56,7 @@ defmodule Risk.Game do
   end
 
   def handle_event(
-        :cast,
+        {:call, from},
         {GameEvent.Connection, %Player{} = player} = _event,
         GameState.PlayerAnnouncement = state,
         data
@@ -65,11 +65,11 @@ defmodule Risk.Game do
     GenServer.cast(data.judge, {:add_player, player})
     new_data = data |> Map.put(:players, players)
 
-    {:next_state, state, new_data}
+    {:next_state, state, new_data, [{:reply, from, {state, nil}}]}
   end
 
   def handle_event(
-        :cast,
+        {:call, from},
         {GameEvent.Ready, guid} = _event,
         GameState.PlayerAnnouncement = state,
         data
@@ -81,15 +81,15 @@ defmodule Risk.Game do
     case MapSet.to_list(status) do
       [:done] ->
         :re_step1 = GenStateMachine.call(data.judge, :done)
-        {:next_state, GameState.Preperation, data}
+        {:next_state, GameState.Preperation, data, [{:reply, from, {state, nil}}]}
 
       _ ->
-        {:next_state, state, data}
+        {:next_state, state, data, [{:reply, from, {state, nil}}]}
     end
   end
 
   def handle_event(
-        :cast,
+        {:call, from},
         {GameEvent.ColorSelect, color, guid},
         GameState.Preperation = state,
         data
@@ -101,21 +101,21 @@ defmodule Risk.Game do
 
     case MapSet.to_list(status) do
       [:color_done] ->
-        {:next_state, GameState.Deployment, data}
+        {:next_state, GameState.Deployment, data, [{:reply, from, {state, nil}}]}
 
       _ ->
-        {:next_state, state, data}
+        {:next_state, state, data, [{:reply, from, {state, nil}}]}
     end
   end
 
   def handle_event(
-        :cast,
+        {:call, from},
         {GameEvent.Deploy, amount, territory, guid},
         GameState.Deployment = state,
         data
       ) do
     data = Logic.set_if_legal(data, amount, territory, guid)
-    {:next_state, state, data}
+    {:next_state, state, data, [{:reply, from, {state, nil}}]}
   end
 
   def handle_event({:call, from}, {GameEvent.Done, guid}, GameState.Deployment = state, data) do
@@ -157,9 +157,18 @@ defmodule Risk.Game do
   def handle_event(:cast, event, state, data) do
     valid_event = Enum.member?(GameEvent.enums, event)
     valid_state = Enum.member?(GameState.enums, state)
-    Logger.debug("Event #{inspect(event)} is valid: #{valid_event}")
-    Logger.debug("Event #{inspect(state)} is valid: #{valid_state}")
-    Logger.debug("Event: #{inspect(event)} not accepted in State: #{inspect(state)}")
+    Logger.debug("State: #{inspect(state)}")
+    case {valid_event, valid_state} do
+      {false, false} ->
+        Logger.error("Event: #{inspect(event)} & State: #{inspect(state)} invalid")
+      {true, false} ->
+        Logger.error("State: #{inspect(state)} invalid")
+      {false, true} ->
+        Logger.error("Event: #{inspect(event)} invalid")
+      {true, true} ->
+        Logger.debug("Event: #{inspect(event)} not accepted in State: #{inspect(state)}")
+    end
+
     {:next_state, state, data}
   end
 
