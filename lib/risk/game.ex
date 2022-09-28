@@ -8,11 +8,15 @@ defmodule Risk.Game do
   alias Risk.Game.State, as: GameState
 
   @max_players 6
+  @min_players 2
 
   @moduledoc """
   Event: Game.Event.Connection - Game.State.PlayerAnnouncement
   Accepts %Player{} and appends to list of connected players.
   Maximum of 6 players.
+
+  Event: Game.Event.Ready - Game.State.PlayerAnnouncement
+  When a minimum of 2 players and all are ready. Game steps to next state
   """
 
   def start_link(name) do
@@ -55,13 +59,14 @@ defmodule Risk.Game do
 
     status = player_status(data.players)
 
-    case MapSet.to_list(status) do
-      [:done] ->
+    # All ready and at least two players, step to next state.
+    case {MapSet.to_list(status), Enum.count(data.players) < @min_players} do
+      {[:done], false} ->
         :re_step1 = GenStateMachine.call(data.judge, :done)
-        {:next_state, GameState.Preperation, data, [{:reply, from, {state, nil}}]}
+        {:next_state, GameState.Preperation, data, [{:reply, from, {state, :ok}}]}
 
       _ ->
-        {:next_state, state, data, [{:reply, from, {state, nil}}]}
+        {:next_state, state, data, [{:reply, from, {state, :error, ["Not enough players"]}}]}
     end
   end
 
