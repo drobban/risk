@@ -106,25 +106,33 @@ defmodule Risk.Game do
     end
   end
 
-  def handle_event({:call, from}, {GameEvent.Done, guid}, GameState.Deployment = state, data) do
+  def handle_event({:call, from}, {GameEvent.Done, guid}, GameState.Deployment = state, ctx) do
     # Need to check that all territories have at least one troop.
-    data =
-      if data.players[guid].reinforcements == 0 do
-        data |> put_in([Access.key(:players), guid, Access.key(:status)], :deploy_done)
-      else
-        data
+    troops = ctx.players[guid].reinforcements == 0
+    legal_defence = Logic.player_defence_legal(ctx, guid)
+    ctx =
+      case {troops, legal_defence} do
+        {true, true} ->
+          ctx |> put_in([Access.key(:players), guid, Access.key(:status)], :deploy_done)
+        {_, _} ->
+          ctx
       end
 
-    status = player_status(data.players)
-
-    case MapSet.to_list(status) do
-      [:deploy_done] ->
+    case {troops, legal_defence, MapSet.to_list(player_status(ctx.players))} do
+      {true, true, [:deploy_done]} ->
         # Start it up. lets play and inform who is first up
-        next_player = GenStateMachine.call(data.judge, :next_player)
-        {:next_state, GameState.Game, data, [{:reply, from, {GameState.Game, next_player}}]}
-
-      _ ->
-        {:next_state, state, data, [{:reply, from, {state, nil}}]}
+        next_player = GenStateMachine.call(ctx.judge, :next_player)
+        {:next_state, GameState.Game, ctx, [{:reply, from, {GameState.Game, next_player}}]}
+      {true, true, _} ->
+        # Start it up. lets play and inform who is first up
+        next_player = GenStateMachine.call(ctx.judge, :next_player)
+        {:next_state, state, ctx, [{:reply, from, {state, :ok}}]}
+      {false, true, _} ->
+        {:next_state, state, ctx, [{:reply, from, {state, :error, ["Troops left to deploy"]}}]}
+      {true, false, _} ->
+        {:next_state, state, ctx, [{:reply, from, {state, :error, ["You have undefended land"]}}]}
+      {false, false, _} ->
+        {:next_state, state, ctx, [{:reply, from, {state, :error, ["Deploy all troops with at least 1 in each"]}}]}
     end
   end
 

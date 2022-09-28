@@ -3,6 +3,7 @@ defmodule GameTest do
   alias Risk.Game.Context, as: GameContext
   alias Risk.Game.State, as: GameState
   alias Risk.Game.Event, as: GameEvent
+  alias Risk.Game.Logic
   use ExUnit.Case
 
   defp create_machine(_) do
@@ -54,8 +55,11 @@ defmodule GameTest do
       card = Enum.at(ctx.players[111].risk_cards, 0)
       enemy_card = Enum.at(ctx.players[112].risk_cards, 0)
 
-      {Risk.Game.State.Deployment, _} =
+      {Risk.Game.State.Deployment, :ok} =
         GenStateMachine.call(pid, {GameEvent.Deploy, 10, card.territory, 111})
+
+      {Risk.Game.State.Deployment, :error, _msg} =
+        GenStateMachine.call(pid, {GameEvent.Deploy, -11, card.territory, 111})
 
       {Risk.Game.State.Deployment, :error, _msg} =
         GenStateMachine.call(pid, {GameEvent.Deploy, 10, enemy_card.territory, 111})
@@ -76,7 +80,7 @@ defmodule GameTest do
 
       card = Enum.at(ctx.players[113].risk_cards, 0)
 
-      {Risk.Game.State.Deployment, _} =
+      {Risk.Game.State.Deployment, :ok} =
         GenStateMachine.call(pid, {GameEvent.Deploy, 35, card.territory, 113})
 
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 113})
@@ -87,7 +91,7 @@ defmodule GameTest do
       # Deploy done
       card = Enum.at(ctx.players[111].risk_cards, 0)
 
-      {Risk.Game.State.Deployment, _} =
+      {Risk.Game.State.Deployment, :ok} =
         GenStateMachine.call(pid, {GameEvent.Deploy, 25, card.territory, 111})
 
       card = Enum.at(ctx.players[112].risk_cards, 0)

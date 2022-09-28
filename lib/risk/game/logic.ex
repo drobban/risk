@@ -59,6 +59,13 @@ defmodule Risk.Game.Logic do
     serve_until_joker(rest ++ [player], card_pile, GenServer.call(card_pile, :pick))
   end
 
+  @doc """
+  set_if_legal(%Risk.Game.Context{}, Integer.t(), String.t(), Integer.t())
+  takes context, amount of forces, name of the territory and the player guid.
+  Tries to update territory with amount. If every restrictions is ok then it
+  returns {:ok, %Risk.Game.Context{}} if legal deployment
+  returns {:error, %Risk.Game.Context{}} if illegal deployment
+  """
   def set_if_legal(ctx, amount, territory_name, guid) do
     territory_names =
       Enum.reduce(ctx.players[guid].risk_cards, [], fn card, acc -> acc ++ [card.territory] end)
@@ -66,12 +73,17 @@ defmodule Risk.Game.Logic do
     territories = ctx.game_board.territories
     idx = Enum.find_index(territories, fn territory -> territory.name == territory_name end)
     members = Enum.member?(territory_names, territory_name)
-    size_ok = amount <= ctx.players[guid].reinforcements
+
+    size_ok =
+      amount <= ctx.players[guid].reinforcements and
+        Enum.at(territories, idx).forces + amount >= 0
 
     if members and !is_nil(idx) and size_ok do
       territories =
         List.update_at(territories, idx, fn territory ->
-          territory |> update_in([Access.key(:forces)], &(&1 + amount))
+          territory
+          |> update_in([Access.key(:forces)], &(&1 + amount))
+          |> put_in([Access.key(:occupant)], guid)
         end)
 
       ctx =
@@ -83,5 +95,19 @@ defmodule Risk.Game.Logic do
     else
       {:error, ctx}
     end
+  end
+
+  @doc """
+  All of players territories in the context must contain at least 1 troop.
+  returns Boolean.t()
+  """
+  def player_defence_legal(ctx, guid) do
+    territory_names =
+      Enum.reduce(ctx.players[guid].risk_cards, [], fn card, acc -> acc ++ [card.territory] end)
+
+    territories = ctx.game_board.territories
+
+    player_territory = Enum.filter(territories, &(Enum.member?(territory_names, &1.name) and &1.forces < 1))
+    Enum.count(player_territory) == 0
   end
 end
