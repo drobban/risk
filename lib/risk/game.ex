@@ -34,18 +34,18 @@ defmodule Risk.Game do
         {:call, from},
         {GameEvent.Connection, %Player{} = player} = _event,
         GameState.PlayerAnnouncement = state,
-        data
+        ctx
       ) do
-
     # Accept maximum players else reject.
-    case Enum.count(data.players) < @max_players do
+    case Enum.count(ctx.players) < @max_players do
       true ->
-        players = data.players |> Map.put(player.guid, player)
-        GenServer.cast(data.judge, {:add_player, player})
-        new_data = data |> Map.put(:players, players)
-        {:next_state, state, new_data, [{:reply, from, {state, :ok}}]}
+        players = ctx.players |> Map.put(player.guid, player)
+        GenServer.cast(ctx.judge, {:add_player, player})
+        new_ctx = ctx |> Map.put(:players, players)
+        {:next_state, state, new_ctx, [{:reply, from, {state, :ok}}]}
+
       false ->
-        {:next_state, state, data, [{:reply, from, {state, :error, ["Game full"]}}]}
+        {:next_state, state, ctx, [{:reply, from, {state, :error, ["Game full"]}}]}
     end
   end
 
@@ -53,20 +53,20 @@ defmodule Risk.Game do
         {:call, from},
         {GameEvent.Ready, guid} = _event,
         GameState.PlayerAnnouncement = state,
-        data
+        ctx
       ) do
-    data = data |> put_in([Access.key(:players), guid, Access.key(:status)], :done)
+    ctx = ctx |> put_in([Access.key(:players), guid, Access.key(:status)], :done)
 
-    status = player_status(data.players)
+    status = player_status(ctx.players)
 
     # All ready and at least two players, step to next state.
-    case {MapSet.to_list(status), Enum.count(data.players) < @min_players} do
+    case {MapSet.to_list(status), Enum.count(ctx.players) < @min_players} do
       {[:done], false} ->
-        :re_step1 = GenStateMachine.call(data.judge, :done)
-        {:next_state, GameState.Preperation, data, [{:reply, from, {state, :ok}}]}
+        :re_step1 = GenStateMachine.call(ctx.judge, :done)
+        {:next_state, GameState.Preperation, ctx, [{:reply, from, {state, :ok}}]}
 
       _ ->
-        {:next_state, state, data, [{:reply, from, {state, :error, ["Not enough players"]}}]}
+        {:next_state, state, ctx, [{:reply, from, {state, :error, ["Not enough players"]}}]}
     end
   end
 
@@ -137,16 +137,20 @@ defmodule Risk.Game do
   end
 
   def handle_event(:cast, event, state, data) do
-    valid_event = Enum.member?(GameEvent.enums, event)
-    valid_state = Enum.member?(GameState.enums, state)
+    valid_event = Enum.member?(GameEvent.enums(), event)
+    valid_state = Enum.member?(GameState.enums(), state)
     Logger.debug("State: #{inspect(state)}")
+
     case {valid_event, valid_state} do
       {false, false} ->
         Logger.error("Event: #{inspect(event)} & State: #{inspect(state)} invalid")
+
       {true, false} ->
         Logger.error("State: #{inspect(state)} invalid")
+
       {false, true} ->
         Logger.error("Event: #{inspect(event)} invalid")
+
       {true, true} ->
         Logger.debug("Event: #{inspect(event)} not accepted in State: #{inspect(state)}")
     end
@@ -163,7 +167,6 @@ defmodule Risk.Game do
       acc |> MapSet.put(v.status)
     end)
   end
-
 
   def handle_event(:enter, _event, GameState.Game = state, data) do
     new_data =
@@ -203,5 +206,4 @@ defmodule Risk.Game do
     Logger.debug("State: #{inspect(state)}")
     {:next_state, state, data}
   end
-
 end

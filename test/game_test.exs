@@ -53,8 +53,12 @@ defmodule GameTest do
 
       card = Enum.at(ctx.players[111].risk_cards, 0)
       enemy_card = Enum.at(ctx.players[112].risk_cards, 0)
-      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 10, card.territory, 111})
-      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 10, enemy_card.territory, 111})
+
+      {Risk.Game.State.Deployment, _} =
+        GenStateMachine.call(pid, {GameEvent.Deploy, 10, card.territory, 111})
+
+      {Risk.Game.State.Deployment, _} =
+        GenStateMachine.call(pid, {GameEvent.Deploy, 10, enemy_card.territory, 111})
 
       ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
 
@@ -71,7 +75,9 @@ defmodule GameTest do
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 112})
 
       card = Enum.at(ctx.players[113].risk_cards, 0)
-      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 35, card.territory, 113})
+
+      {Risk.Game.State.Deployment, _} =
+        GenStateMachine.call(pid, {GameEvent.Deploy, 35, card.territory, 113})
 
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 113})
       ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
@@ -80,9 +86,15 @@ defmodule GameTest do
 
       # Deploy done
       card = Enum.at(ctx.players[111].risk_cards, 0)
-      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 25, card.territory, 111})
+
+      {Risk.Game.State.Deployment, _} =
+        GenStateMachine.call(pid, {GameEvent.Deploy, 25, card.territory, 111})
+
       card = Enum.at(ctx.players[112].risk_cards, 0)
-      {Risk.Game.State.Deployment, _} = GenStateMachine.call(pid, {GameEvent.Deploy, 35, card.territory, 112})
+
+      {Risk.Game.State.Deployment, _} =
+        GenStateMachine.call(pid, {GameEvent.Deploy, 35, card.territory, 112})
+
       {GameState.Deployment, _data} = GenStateMachine.call(pid, {GameEvent.Done, 111})
       {GameState.Game, next_player} = GenStateMachine.call(pid, {GameEvent.Done, 112})
 
