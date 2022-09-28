@@ -6,6 +6,7 @@ defmodule Risk.Game do
   alias Risk.Game.Logic, as: Logic
   alias Risk.Game.Event, as: GameEvent
   alias Risk.Game.State, as: GameState
+  alias Risk.Judge.Event, as: JudgeEvent
 
   @max_players 6
   @min_players 2
@@ -40,7 +41,7 @@ defmodule Risk.Game do
     case Enum.count(ctx.players) < @max_players do
       true ->
         players = ctx.players |> Map.put(player.guid, player)
-        GenServer.cast(ctx.judge, {:add_player, player})
+        GenServer.cast(ctx.judge, {JudgeEvent.AddPlayer, player})
         new_ctx = ctx |> Map.put(:players, players)
         {:next_state, state, new_ctx, [{:reply, from, {state, :ok}}]}
 
@@ -62,7 +63,7 @@ defmodule Risk.Game do
     # All ready and at least two players, step to next state.
     case {MapSet.to_list(status), Enum.count(ctx.players) < @min_players} do
       {[:done], false} ->
-        :re_step1 = GenStateMachine.call(ctx.judge, :done)
+        :re_step1 = GenStateMachine.call(ctx.judge, JudgeEvent.Done)
         {:next_state, GameState.Preperation, ctx, [{:reply, from, {state, :ok}}]}
 
       _ ->
@@ -123,7 +124,7 @@ defmodule Risk.Game do
     case {troops, legal_defence, MapSet.to_list(player_status(ctx.players))} do
       {true, true, [:deploy_done]} ->
         # Start it up. lets play and inform who is first up
-        next_player = GenStateMachine.call(ctx.judge, :next_player)
+        next_player = GenStateMachine.call(ctx.judge, JudgeEvent.NextPlayer)
         {:next_state, GameState.Game, ctx, [{:reply, from, {GameState.Game, next_player}}]}
 
       {true, true, _} ->
@@ -143,12 +144,12 @@ defmodule Risk.Game do
   end
 
   def handle_event({:call, from}, {GameEvent.Done, guid}, GameState.Game = state, ctx) do
-    judge_ctx = GenStateMachine.call(ctx.judge, :get_status)
+    judge_ctx = GenStateMachine.call(ctx.judge, JudgeEvent.GetStatus)
 
     case judge_ctx.current_player.guid do
       ^guid ->
         # perform task
-        next_phase = GenStateMachine.call(ctx.judge, :done)
+        next_phase = GenStateMachine.call(ctx.judge, JudgeEvent.Done)
         {:next_state, state, ctx, [{:reply, from, {state, next_phase}}]}
 
       _ ->

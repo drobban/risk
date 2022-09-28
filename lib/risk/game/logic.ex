@@ -1,5 +1,7 @@
 defmodule Risk.Game.Logic do
   require Logger
+  alias Risk.Judge.Event, as: JudgeEvent
+
   @army_size %{3 => 35, 4 => 30, 5 => 25, 6 => 20}
 
   def fillup(ctx) do
@@ -36,7 +38,7 @@ defmodule Risk.Game.Logic do
   end
 
   def assign_risk_cards(ctx) do
-    player_list = GenServer.call(ctx.judge, :get_play_order)
+    player_list = GenServer.call(ctx.judge, JudgeEvent.GetPlayOrder)
 
     handed_players = serve_until_joker(player_list, ctx.card_pile, nil)
 

@@ -2,6 +2,7 @@ defmodule LogicTest do
   require Logger
   use ExUnit.Case
   alias Risk.Game.Context, as: GameContext
+  alias Risk.Judge.Event, as: JudgeEvent
 
   test "Game logic functions - Mission assignment" do
     ctx = %GameContext{
@@ -38,9 +39,9 @@ defmodule LogicTest do
       }
     }
 
-    GenServer.cast(judge, {:add_player, ctx.players[111]})
-    GenServer.cast(judge, {:add_player, ctx.players[222]})
-    GenServer.cast(judge, {:add_player, ctx.players[333]})
+    GenServer.cast(judge, {JudgeEvent.AddPlayer, ctx.players[111]})
+    GenServer.cast(judge, {JudgeEvent.AddPlayer, ctx.players[222]})
+    GenServer.cast(judge, {JudgeEvent.AddPlayer, ctx.players[333]})
 
     ctx = Risk.Game.Logic.assign_risk_cards(ctx)
 
