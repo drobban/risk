@@ -66,7 +66,7 @@ defmodule Risk.Game do
         {:next_state, GameState.Preperation, ctx, [{:reply, from, {state, :ok}}]}
 
       _ ->
-        {:next_state, state, ctx, [{:reply, from, {state, :error, ["Not enough players"]}}]}
+        {:next_state, state, ctx, [{:reply, from, {state, :ok}}]}
     end
   end
 
@@ -110,10 +110,12 @@ defmodule Risk.Game do
     # Need to check that all territories have at least one troop.
     troops = ctx.players[guid].reinforcements == 0
     legal_defence = Logic.player_defence_legal(ctx, guid)
+
     ctx =
       case {troops, legal_defence} do
         {true, true} ->
           ctx |> put_in([Access.key(:players), guid, Access.key(:status)], :deploy_done)
+
         {_, _} ->
           ctx
       end
@@ -123,16 +125,20 @@ defmodule Risk.Game do
         # Start it up. lets play and inform who is first up
         next_player = GenStateMachine.call(ctx.judge, :next_player)
         {:next_state, GameState.Game, ctx, [{:reply, from, {GameState.Game, next_player}}]}
+
       {true, true, _} ->
-        # Start it up. lets play and inform who is first up
-        next_player = GenStateMachine.call(ctx.judge, :next_player)
+        # Not all players are ready yet.
         {:next_state, state, ctx, [{:reply, from, {state, :ok}}]}
+
       {false, true, _} ->
         {:next_state, state, ctx, [{:reply, from, {state, :error, ["Troops left to deploy"]}}]}
+
       {true, false, _} ->
         {:next_state, state, ctx, [{:reply, from, {state, :error, ["You have undefended land"]}}]}
+
       {false, false, _} ->
-        {:next_state, state, ctx, [{:reply, from, {state, :error, ["Deploy all troops with at least 1 in each"]}}]}
+        {:next_state, state, ctx,
+         [{:reply, from, {state, :error, ["Deploy all troops with at least 1 in each"]}}]}
     end
   end
 

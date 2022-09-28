@@ -107,7 +107,9 @@ defmodule Risk.Game.Logic do
 
     territories = ctx.game_board.territories
 
-    player_territory = Enum.filter(territories, &(Enum.member?(territory_names, &1.name) and &1.forces < 1))
+    player_territory =
+      Enum.filter(territories, &(Enum.member?(territory_names, &1.name) and &1.forces < 1))
+
     Enum.count(player_territory) == 0
   end
 end

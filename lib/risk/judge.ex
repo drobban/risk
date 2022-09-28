@@ -8,7 +8,7 @@ defmodule Risk.Judge do
     GenStateMachine.start_link(Risk.Judge, {:init, %Context{}})
   end
 
-  def handle_event(:enter, _event, state, _ctx) do
+  def handle_event(:enter, _event, _state, _ctx) do
     # Logger.debug("Entered: #{state}")
     {:keep_state_and_data, []}
   end
@@ -59,7 +59,7 @@ defmodule Risk.Judge do
     {:next_state, state, ctx, [{:reply, from, next}]}
   end
 
-  def handle_event({:call, from}, :next_phase, state, ctx) do
+  def handle_event({:call, from}, :next_phase, _state, ctx) do
     [next | phases] = ctx.phases
     phases = if !is_nil(ctx.current_phase), do: phases ++ [ctx.current_phase], else: phases
 
