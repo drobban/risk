@@ -7,6 +7,14 @@ defmodule Risk.Game do
   alias Risk.Game.Event, as: GameEvent
   alias Risk.Game.State, as: GameState
 
+  @max_players 6
+
+  @moduledoc """
+  Event: Game.Event.Connection - Game.State.PlayerAnnouncement
+  Accepts %Player{} and appends to list of connected players.
+  Maximum of 6 players.
+  """
+
   def start_link(name) do
     {:ok, card_pile} = GenServer.start_link(Risk.CardPile, nil)
     {:ok, judge} = Risk.Judge.start_link()
@@ -18,54 +26,23 @@ defmodule Risk.Game do
     )
   end
 
-  def handle_event(:enter, _event, GameState.Preperation = state, data) do
-    new_data =
-      data
-      |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
-      |> Logic.assign_risk_cards()
-
-    Logger.debug("State: #{inspect(state)}")
-    {:next_state, state, new_data}
-  end
-
-  def handle_event(:enter, _event, GameState.Deployment = state, data) do
-    # Assign mission cards
-    new_data =
-      data
-      |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
-      |> Logic.assign_mission_cards()
-      |> Logic.fillup()
-
-    Logger.debug("State: #{inspect(state)}")
-    {:next_state, state, new_data}
-  end
-
-  def handle_event(:enter, _event, GameState.Game = state, data) do
-    new_data =
-      data
-      |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
-
-    # Assign initial set of cards
-    Logger.debug("State: #{inspect(state)}")
-    {:next_state, state, new_data}
-  end
-
-  def handle_event(:enter, _event, state, data) do
-    Logger.debug("State: #{inspect(state)}")
-    {:next_state, state, data}
-  end
-
   def handle_event(
         {:call, from},
         {GameEvent.Connection, %Player{} = player} = _event,
         GameState.PlayerAnnouncement = state,
         data
       ) do
-    players = data.players |> Map.put(player.guid, player)
-    GenServer.cast(data.judge, {:add_player, player})
-    new_data = data |> Map.put(:players, players)
 
-    {:next_state, state, new_data, [{:reply, from, {state, nil}}]}
+    # Accept maximum players else reject.
+    case Enum.count(data.players) < @max_players do
+      true ->
+        players = data.players |> Map.put(player.guid, player)
+        GenServer.cast(data.judge, {:add_player, player})
+        new_data = data |> Map.put(:players, players)
+        {:next_state, state, new_data, [{:reply, from, {state, :ok}}]}
+      false ->
+        {:next_state, state, data, [{:reply, from, {state, :error, ["Game full"]}}]}
+    end
   end
 
   def handle_event(
@@ -181,4 +158,45 @@ defmodule Risk.Game do
       acc |> MapSet.put(v.status)
     end)
   end
+
+
+  def handle_event(:enter, _event, GameState.Game = state, data) do
+    new_data =
+      data
+      |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
+
+    # Assign initial set of cards
+    Logger.debug("State: #{inspect(state)}")
+    {:next_state, state, new_data}
+  end
+
+  # STATE ENTER callbacks
+
+  def handle_event(:enter, _event, GameState.Preperation = state, data) do
+    new_data =
+      data
+      |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
+      |> Logic.assign_risk_cards()
+
+    Logger.debug("State: #{inspect(state)}")
+    {:next_state, state, new_data}
+  end
+
+  def handle_event(:enter, _event, GameState.Deployment = state, data) do
+    # Assign mission cards
+    new_data =
+      data
+      |> put_in([Access.key(:players)], Logic.reset_player_status(data.players))
+      |> Logic.assign_mission_cards()
+      |> Logic.fillup()
+
+    Logger.debug("State: #{inspect(state)}")
+    {:next_state, state, new_data}
+  end
+
+  def handle_event(:enter, _event, state, data) do
+    Logger.debug("State: #{inspect(state)}")
+    {:next_state, state, data}
+  end
+
 end
