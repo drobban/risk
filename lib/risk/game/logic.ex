@@ -74,11 +74,14 @@ defmodule Risk.Game.Logic do
           territory |> update_in([Access.key(:forces)], &(&1 + amount))
         end)
 
-      ctx
-      |> put_in([Access.key(:game_board), Access.key(:territories)], territories)
-      |> update_in([Access.key(:players), guid, Access.key(:reinforcements)], &(&1 - amount))
+      ctx =
+        ctx
+        |> put_in([Access.key(:game_board), Access.key(:territories)], territories)
+        |> update_in([Access.key(:players), guid, Access.key(:reinforcements)], &(&1 - amount))
+
+      {:ok, ctx}
     else
-      ctx
+      {:error, ctx}
     end
   end
 end

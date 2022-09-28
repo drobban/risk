@@ -74,19 +74,19 @@ defmodule Risk.Game do
         {:call, from},
         {GameEvent.ColorSelect, color, guid},
         GameState.Preperation = state,
-        data
+        ctx
       ) do
-    data = data |> put_in([Access.key(:players), guid, Access.key(:color)], color)
-    data = data |> put_in([Access.key(:players), guid, Access.key(:status)], :color_done)
+    ctx = ctx |> put_in([Access.key(:players), guid, Access.key(:color)], color)
+    ctx = ctx |> put_in([Access.key(:players), guid, Access.key(:status)], :color_done)
 
-    status = player_status(data.players)
+    status = player_status(ctx.players)
 
     case MapSet.to_list(status) do
       [:color_done] ->
-        {:next_state, GameState.Deployment, data, [{:reply, from, {state, nil}}]}
+        {:next_state, GameState.Deployment, ctx, [{:reply, from, {state, :ok}}]}
 
       _ ->
-        {:next_state, state, data, [{:reply, from, {state, nil}}]}
+        {:next_state, state, ctx, [{:reply, from, {state, :ok}}]}
     end
   end
 
@@ -94,10 +94,16 @@ defmodule Risk.Game do
         {:call, from},
         {GameEvent.Deploy, amount, territory, guid},
         GameState.Deployment = state,
-        data
+        ctx
       ) do
-    data = Logic.set_if_legal(data, amount, territory, guid)
-    {:next_state, state, data, [{:reply, from, {state, nil}}]}
+    case Logic.set_if_legal(ctx, amount, territory, guid) do
+      {:ok, ctx} ->
+        {:next_state, state, ctx, [{:reply, from, {state, :ok}}]}
+
+      {:error, ctx} ->
+        {:next_state, state, ctx,
+         [{:reply, from, {state, :error, ["Probably illegal territory"]}}]}
+    end
   end
 
   def handle_event({:call, from}, {GameEvent.Done, guid}, GameState.Deployment = state, data) do
@@ -162,12 +168,6 @@ defmodule Risk.Game do
     {:keep_state_and_data, [{:reply, from, data}]}
   end
 
-  def player_status(players) do
-    Enum.reduce(players, MapSet.new(), fn {_k, v}, acc ->
-      acc |> MapSet.put(v.status)
-    end)
-  end
-
   def handle_event(:enter, _event, GameState.Game = state, data) do
     new_data =
       data
@@ -205,5 +205,11 @@ defmodule Risk.Game do
   def handle_event(:enter, _event, state, data) do
     Logger.debug("State: #{inspect(state)}")
     {:next_state, state, data}
+  end
+
+  def player_status(players) do
+    Enum.reduce(players, MapSet.new(), fn {_k, v}, acc ->
+      acc |> MapSet.put(v.status)
+    end)
   end
 end

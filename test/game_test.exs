@@ -57,7 +57,7 @@ defmodule GameTest do
       {Risk.Game.State.Deployment, _} =
         GenStateMachine.call(pid, {GameEvent.Deploy, 10, card.territory, 111})
 
-      {Risk.Game.State.Deployment, _} =
+      {Risk.Game.State.Deployment, :error, _msg} =
         GenStateMachine.call(pid, {GameEvent.Deploy, 10, enemy_card.territory, 111})
 
       ctx = GenStateMachine.call(pid, GameEvent.GetStatus)
