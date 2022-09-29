@@ -4,9 +4,10 @@ defmodule Risk.Judge do
   alias Risk.Judge.Context, as: Context
   alias Risk.Player, as: Player
   alias Risk.Judge.Event, as: JudgeEvent
+  alias Risk.Judge.State, as: JudgeState
 
   def start_link() do
-    GenStateMachine.start_link(Risk.Judge, {:init, %Context{}})
+    GenStateMachine.start_link(Risk.Judge, {JudgeState.Init, %Context{}})
   end
 
   def handle_event(:enter, _event, _state, _ctx) do
@@ -14,28 +15,28 @@ defmodule Risk.Judge do
     {:keep_state_and_data, []}
   end
 
-  def handle_event(:cast, {JudgeEvent.AddPlayer, %Player{} = player}, :init = state, ctx) do
+  def handle_event(:cast, {JudgeEvent.AddPlayer, %Player{} = player}, JudgeState.Init = state, ctx) do
     new_ctx = ctx |> update_in([Access.key(:play_order)], &Enum.shuffle(&1 ++ [player]))
     {:next_state, state, new_ctx}
   end
 
-  def handle_event({:call, from}, JudgeEvent.Done, :init = state, ctx) do
+  def handle_event({:call, from}, JudgeEvent.Done, JudgeState.Init = state, ctx) do
     handle_event({:call, from}, JudgeEvent.NextPhase, state, ctx)
   end
 
-  def handle_event({:call, from}, JudgeEvent.Done, :re_step1 = state, ctx) do
+  def handle_event({:call, from}, JudgeEvent.Done, JudgeState.ReStep1 = state, ctx) do
     # Add some checking, perhaps more then one player is a requirement?
     # {:next_state, :re_step1, ctx, [{:reply, from, :re_step1}]}
     handle_event({:call, from}, JudgeEvent.NextPhase, state, ctx)
   end
 
-  def handle_event({:call, from}, JudgeEvent.Done, :re_step2 = state, ctx) do
+  def handle_event({:call, from}, JudgeEvent.Done, JudgeState.ReStep2 = state, ctx) do
     # Add some checking, perhaps more then one player is a requirement?
     # {:next_state, :re_step1, ctx, [{:reply, from, :re_step1}]}
     handle_event({:call, from}, JudgeEvent.NextPhase, state, ctx)
   end
 
-  def handle_event({:call, from}, JudgeEvent.Done, :check_victor, ctx) do
+  def handle_event({:call, from}, JudgeEvent.Done, JudgeState.CheckVictor, ctx) do
     {:next_state, :new_round, ctx, [{:reply, from, :new_round}]}
   end
 

@@ -3,6 +3,7 @@ defmodule GameTest do
   alias Risk.Game.Context, as: GameContext
   alias Risk.Game.State, as: GameState
   alias Risk.Game.Event, as: GameEvent
+  alias Risk.Judge.State, as: JudgeState
   use ExUnit.Case
 
   defp create_machine(_) do
@@ -130,7 +131,7 @@ defmodule GameTest do
 
       assert next_player != nil
       {_state, status} = GenStateMachine.call(pid, {GameEvent.Done, next_player.guid})
-      assert status == :re_step2
+      assert status == JudgeState.ReStep2
       {_state, status} = GenStateMachine.call(pid, {GameEvent.Done, 666})
       assert status == :wrong_user
     end

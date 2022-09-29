@@ -7,6 +7,7 @@ defmodule Risk.Game do
   alias Risk.Game.Event, as: GameEvent
   alias Risk.Game.State, as: GameState
   alias Risk.Judge.Event, as: JudgeEvent
+  alias Risk.Judge.State, as: JudgeState
 
   @max_players 6
   @min_players 2
@@ -63,7 +64,7 @@ defmodule Risk.Game do
     # All ready and at least two players, step to next state.
     case {MapSet.to_list(status), Enum.count(ctx.players) < @min_players} do
       {[:done], false} ->
-        :re_step1 = GenStateMachine.call(ctx.judge, JudgeEvent.Done)
+        JudgeState.ReStep1 = GenStateMachine.call(ctx.judge, JudgeEvent.Done)
         {:next_state, GameState.Preperation, ctx, [{:reply, from, {state, :ok}}]}
 
       _ ->
